@@ -1,4 +1,29 @@
 ﻿@page "/"
+@using Data.Models
 
-<h1></h1>
+<h1 class="main-headings">Salary Tracker</h1>
+<body>
+@*Card section for displaying hours logged, displayed in weeks*@
+<section class="main-background">
+    <div>
+
+    </div>
+</section>
+@*Card section displaying hours worked this week or month and money earnt*@
+@*Include button to sign out*@
+<section>
+    <div>
+
+    </div>
+</section>
+</body>
+
+@code {
+    public TrackingData data = new TrackingData()
+    {
+        // Function for using inherited variables from Data.cs
+
+    };
+}
+
 

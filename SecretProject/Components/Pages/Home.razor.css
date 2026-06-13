@@ -1,0 +1,14 @@
+.main-headings {
+    color: cyan;
+    text-align: center;
+    font-family: 'Courier New', Courier, monospace;
+
+}
+
+.main-background {
+    background-color: #545454;
+    justify-content: center;
+    padding: 24px;
+    border-radius: 12px;
+    border-color: aquamarine;
+}
