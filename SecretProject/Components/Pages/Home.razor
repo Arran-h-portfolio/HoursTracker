@@ -1,8 +1,10 @@
 ﻿@page "/"
+@using Data.Models
 
-<h1>Salary Tracker</h1>
+<h1 class="main-headings">Salary Tracker</h1>
+<body>
 @*Card section for displaying hours logged, displayed in weeks*@
-<section>
+<section class="main-background">
     <div>
 
     </div>
@@ -14,5 +16,14 @@
 
     </div>
 </section>
+</body>
+
+@code {
+    public TrackingData data = new TrackingData()
+    {
+        // Function for using inherited variables from Data.cs
+
+    };
+}
 
 
