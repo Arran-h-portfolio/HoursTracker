@@ -8,6 +8,8 @@
 .main-background {
     background-color: #545454;
     justify-content: center;
+    width: auto;
+    height: 100px;
     padding: 24px;
     border-radius: 12px;
     border-color: aquamarine;

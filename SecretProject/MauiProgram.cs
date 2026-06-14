@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Data.Models;
+using Microsoft.Extensions.Logging;
 
 namespace SecretProject;
 
@@ -15,6 +16,7 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
+		builder.Services.AddSingleton<TrackingData>();
 
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();

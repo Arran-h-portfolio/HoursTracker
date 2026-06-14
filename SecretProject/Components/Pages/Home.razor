@@ -6,7 +6,8 @@
 @*Card section for displaying hours logged, displayed in weeks*@
 <section class="main-background">
     <div>
-
+          <h2>Current Earnings: @data.CurrentEarnings</h2>
+          <h3>MoM: </h3>
     </div>
 </section>
 @*Card section displaying hours worked this week or month and money earnt*@
@@ -22,7 +23,22 @@
     public TrackingData data = new TrackingData()
     {
         // Function for using inherited variables from Data.cs
+        // Need a method for adding ours into a set day, onclick input for adding
+        // start time, end time from a selected day on the calendar this then adds the hours worked into the list
 
+        // Need a separate method for displaying hours worked and money earnt in a current month
+        public void TotalCurrentEarnings()
+        {
+            // gets the double values from the ditionary with .Value and adds them together with .Sum()
+            data.CurrentEarnings = data.HoursLogged.Values.Sum() * data.HourlyWage; 
+
+        }
+        // Method for adding in hours to the dictionary for each day
+        // Needs to be linked to calendar input, so need calendar setup first
+        public void AddHours()
+        {
+            data.HoursLogged.Add(data.hoursWorked);
+        }
     };
 }
 
