@@ -1,10 +1,15 @@
 .main-headings {
-    color: cyan;
+    color: rgb(17, 249, 98);
     text-align: center;
     font-family: 'Courier New', Courier, monospace;
 
 }
-
+.secondary-headings {
+    color: rgb(17, 248, 99);
+    text-align: center;
+    align-items: block;
+    font-family: 'Courier New', Courier, monospace;
+}
 .main-background {
     background-color: #545454;
     justify-content: center;
@@ -13,4 +18,25 @@
     padding: 24px;
     border-radius: 12px;
     border-color: aquamarine;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+.row-display {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+.btn-main {
+    color: rgb(17, 248, 99);
+    background-color: black;
+    align-items: center;
+    border-radius: 24px;
+    padding: 12px;
+    gap: 16px;
+}
+.arrow-up {
+    color: #00c853;
+}
+.arrow-down {
+    color: #d50000;
 }

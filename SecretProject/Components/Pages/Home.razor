@@ -6,40 +6,51 @@
 @*Card section for displaying hours logged, displayed in weeks*@
 <section class="main-background">
     <div>
-          <h2>Current Earnings: @data.CurrentEarnings</h2>
-          <h3>MoM: </h3>
+          <h2>Current Earnings: @*@data.CurrentEarnings*@ £1,492.00</h2>
+          <p>MoM: £50<span class="@(isUp ? "arrow-up" : "arrow-down")">@(isUp ? "▲" : "▼")</span> </p>
     </div>
 </section>
-@*Card section displaying hours worked this week or month and money earnt*@
-@*Include button to sign out*@
-<section>
+@*Card section displaying input for shift start and end with submit button to log the day*@
+<section class="main-background">
     <div>
+        <div class="row-display">
+        <label class="secondary-headings">Shift Start
+            <input type="time" @bind="shiftStart" />
+        </label>
+        <label class="secondary-headings">Shift End
+            <input type="time" @bind="shiftEnd" />
+        </label>
+        </div>
+        <button class="btn-main" @onclick="AddHours">Submit</button>
 
     </div>
 </section>
 </body>
 
 @code {
-    public TrackingData data = new TrackingData()
+    public TrackingData data = new TrackingData();
+    private TimeOnly shiftStart = new TimeOnly(9, 0);
+    private TimeOnly shiftEnd = TimeOnly.FromDateTime(DateTime.Now);
+    private bool isUp = true; // wire this to your real comparison later
+    
+
+    // gets the double values from the dictionary with .Values and adds them together with .Sum()
+    public void TotalCurrentEarnings()
     {
-        // Function for using inherited variables from Data.cs
-        // Need a method for adding ours into a set day, onclick input for adding
-        // start time, end time from a selected day on the calendar this then adds the hours worked into the list
+        data.CurrentEarnings = data.HoursLogged.Values.Sum() * data.HourlyWage;
+    }
 
-        // Need a separate method for displaying hours worked and money earnt in a current month
-        public void TotalCurrentEarnings()
-        {
-            // gets the double values from the ditionary with .Value and adds them together with .Sum()
-            data.CurrentEarnings = data.HoursLogged.Values.Sum() * data.HourlyWage; 
+    // Method for adding in hours to the dictionary for each day
+    // Needs to be linked to calendar input, so need calendar setup first
+    public void AddHours()
+    {
+        double hours = (shiftEnd - shiftStart).TotalHours;
 
-        }
-        // Method for adding in hours to the dictionary for each day
-        // Needs to be linked to calendar input, so need calendar setup first
-        public void AddHours()
-        {
-            data.HoursLogged.Add(data.hoursWorked);
-        }
-    };
+        data.HoursLogged.Add(DateOnly.FromDateTime(DateTime.Today), hours);
+        TotalCurrentEarnings();
+        StateHasChanged(); 
+    }
+
 }
 
 
