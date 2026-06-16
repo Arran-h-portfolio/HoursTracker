@@ -26,6 +26,24 @@
     align-items: center;
     gap: 16px;
 }
+.column-display {
+    display: table-column;
+    align-items: left;
+    gap: 16px;
+}
+.log-list {
+    max-height: 240px;
+    overflow-y: auto;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.log-list li {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid #444;
+}
 .btn-main {
     color: rgb(17, 248, 99);
     background-color: black;

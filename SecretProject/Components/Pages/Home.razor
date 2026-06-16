@@ -25,6 +25,23 @@
 
     </div>
 </section>
+@*Section for logged hours, displayed as list with days, hours worked*@
+<section class="main-background">
+    <div>
+        <div class="column-display">
+            <h2>Daily Log</h2>
+            <ul class="log-list">
+                @foreach (var entry in data.HoursLogged.OrderByDescending(e => e.Key))
+                {
+                    <li>
+                        <span class="entry-date">@entry.Key.ToString("dddd, dd, MMM yyyy")</span>
+                        <span class="entry-hours">@entry.Value.ToString("0.##") hrs</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</section>
 </body>
 
 @code {
@@ -46,7 +63,7 @@
     {
         double hours = (shiftEnd - shiftStart).TotalHours;
 
-        data.HoursLogged.Add(DateOnly.FromDateTime(DateTime.Today), hours);
+        data.HoursLogged[DateOnly.FromDateTime(DateTime.Today)] = hours;
         TotalCurrentEarnings();
         StateHasChanged(); 
     }

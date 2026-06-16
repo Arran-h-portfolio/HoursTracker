@@ -8,6 +8,7 @@ public class TrackingData()
     public DateTime ShiftStart { get; set; }
     public DateTime ShiftEnd { get; set; }
     public double HoursWorked { get; set; }
+    public double TaxRate { get; set; }
     public DateTime PayDay { get; set; }
     // timespan to represent time between pays i.e. 1st of June to 1st of July
     public TimeSpan PayPeriod { get; set; }
