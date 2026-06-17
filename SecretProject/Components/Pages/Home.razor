@@ -1,12 +1,15 @@
 ﻿@page "/"
 @using Data.Models
+@using SecretProject.Services
+@inject HoursTrackerService TrackerService
 
 <h1 class="main-headings">Salary Tracker</h1>
 <body>
 @*Card section for displaying hours logged, displayed in weeks*@
 <section class="main-background">
-    <div>
-          <h2>Current Earnings: @*@data.CurrentEarnings*@ £1,492.00</h2>
+    <div class="column-display">
+          <h2>Gross Earnings: £@grossEarnings.ToString("N2")</h2>
+          <h2>Net Earnings: £@netEarnings.ToString("N2")</h2>
           <p>MoM: £50<span class="@(isUp ? "arrow-up" : "arrow-down")">@(isUp ? "▲" : "▼")</span> </p>
     </div>
 </section>
@@ -31,7 +34,7 @@
         <div class="column-display">
             <h2>Daily Log</h2>
             <ul class="log-list">
-                @foreach (var entry in data.HoursLogged.OrderByDescending(e => e.Key))
+                @foreach (var entry in hoursLogged.OrderByDescending(e => e.Key))
                 {
                     <li>
                         <span class="entry-date">@entry.Key.ToString("dddd, dd, MMM yyyy")</span>
@@ -45,29 +48,33 @@
 </body>
 
 @code {
-    public TrackingData data = new TrackingData();
+    private Dictionary<DateOnly, double> hoursLogged = new();
+    private double grossEarnings;
+    private double netEarnings;
     private TimeOnly shiftStart = new TimeOnly(9, 0);
     private TimeOnly shiftEnd = TimeOnly.FromDateTime(DateTime.Now);
     private bool isUp = true; // wire this to your real comparison later
-    
 
-    // gets the double values from the dictionary with .Values and adds them together with .Sum()
-    public void TotalCurrentEarnings()
+    protected override async Task OnInitializedAsync()
     {
-        data.CurrentEarnings = data.HoursLogged.Values.Sum() * data.HourlyWage;
+        await RefreshAsync();
     }
 
-    // Method for adding in hours to the dictionary for each day
+    private async Task RefreshAsync()
+    {
+        hoursLogged = await TrackerService.GetHoursLoggedAsync();
+        var summary = await TrackerService.GetEarningsSummaryAsync();
+        grossEarnings = summary.GrossEarnings;
+        netEarnings = summary.NetEarnings;
+    }
+
+    // Method for adding in hours to the log for each day
     // Needs to be linked to calendar input, so need calendar setup first
-    public void AddHours()
+    public async Task AddHours()
     {
         double hours = (shiftEnd - shiftStart).TotalHours;
 
-        data.HoursLogged[DateOnly.FromDateTime(DateTime.Today)] = hours;
-        TotalCurrentEarnings();
-        StateHasChanged(); 
+        await TrackerService.LogHoursAsync(DateOnly.FromDateTime(DateTime.Today), hours);
+        await RefreshAsync();
     }
-
 }
-
-

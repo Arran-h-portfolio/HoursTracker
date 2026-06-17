@@ -1,5 +1,7 @@
 ﻿using Data.Models;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using SecretProject.Services;
 
 namespace SecretProject;
 
@@ -16,13 +18,27 @@ public static class MauiProgram
 			});
 
 		builder.Services.AddMauiBlazorWebView();
-		builder.Services.AddSingleton<TrackingData>();
-
+        // create the Db file
+		builder.Services.AddDbContextFactory<AppDbContext>(options =>
+		{
+			var dbPath = Path.Combine(FileSystem.Current.AppDataDirectory, "hourstracker.db");
+			options.UseSqlite($"Data Source={dbPath}");
+		});
+		builder.Services.AddSingleton<HoursTrackerService>();
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
 #endif
 
-		return builder.Build();
+		var app = builder.Build();
+
+		// Make sure the SQlite file + tables exist before any page queries them.
+		var dbContextFactory = app.Services.GetRequiredService<IDbContextFactory<AppDbContext>>();
+		using (var db = dbContextFactory.CreateDbContext())
+		{
+			db.Database.EnsureCreated();
+		}
+
+		return app;
 	}
 }
