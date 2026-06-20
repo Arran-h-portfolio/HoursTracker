@@ -1,0 +1,104 @@
+@page "/"
+@using Data.Models
+@using TradeLedger.Services
+@inject HoursTrackerService TrackerService
+
+<h1 class="main-headings">Salary Tracker</h1>
+<body>
+@*Card section for displaying hours logged, displayed in weeks*@
+<section class="main-background">
+    <div class="column-display">
+        <div class="stat-block">
+            <span class="secondary-headings">Total Hours</span>
+            <span class="stat-value">@totalHours.ToString("0.##") hrs</span>
+        </div>
+        @if (totalHours > 0 && grossEarnings == 0)
+        {
+            <div class="stat-divider"></div>
+            <p class="secondary-headings">Set your hourly wage in Settings to see earnings.</p>
+        }
+        else
+        {
+            <div class="stat-divider"></div>
+            <div class="stat-block">
+                <span class="secondary-headings">Gross Earnings</span>
+                <span class="stat-value earnings">£@grossEarnings.ToString("N2")</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-block">
+                <span class="secondary-headings">Net Earnings</span>
+                <span class="stat-value net-earnings">£@netEarnings.ToString("N2")</span>
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-block">
+                <span class="secondary-headings">Month on Month</span>
+                <span class="stat-value">£50 <span class="@(isUp ? "arrow-up" : "arrow-down")">@(isUp ? "▲" : "▼")</span></span>
+            </div>
+        }
+    </div>
+</section>
+@*Card section displaying input for shift start and end with submit button to log the day*@
+<section class="main-background">
+    <div>
+        <div class="row-display">
+        <label class="secondary-headings">Shift Start
+            <input type="time" @bind="shiftStart" />
+        </label>
+        <label class="secondary-headings">Shift End
+            <input type="time" @bind="shiftEnd" />
+        </label>
+        </div>
+        <button class="btn-main" @onclick="AddHours">Log Shift</button>
+
+    </div>
+</section>
+@*Section for logging hours, displayed as list with days, hours worked*@
+<section class="main-background">
+    <div>
+        <div class="column-display">
+            <h2 class="secondary-headings">Daily Log</h2>
+            <ul class="log-list">
+                @foreach (var entry in hoursLogged.OrderByDescending(e => e.Key))
+                {
+                    <li>
+                        <span class="entry-date">@entry.Key.ToString("dddd, dd MMM yyyy")</span>
+                        <span class="entry-hours">@entry.Value.ToString("0.##") hrs</span>
+                    </li>
+                }
+            </ul>
+        </div>
+    </div>
+</section>
+</body>
+
+@code {
+    private Dictionary<DateOnly, double> hoursLogged = new();
+    private double grossEarnings;
+    private double netEarnings;
+    private double totalHours;
+    private TimeOnly shiftStart = new TimeOnly(9, 0);
+    private TimeOnly shiftEnd = TimeOnly.FromDateTime(DateTime.Now);
+    private bool isUp = true; // wire this to your real comparison later
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        hoursLogged = await TrackerService.GetHoursLoggedAsync();
+        var summary = await TrackerService.GetEarningsSummaryAsync();
+        grossEarnings = summary.GrossEarnings;
+        netEarnings = summary.NetEarnings;
+        totalHours = summary.TotalHours;
+    }
+
+    public async Task AddHours()
+    {
+        double hours = (shiftEnd - shiftStart).TotalHours;
+
+        await TrackerService.LogHoursAsync(DateOnly.FromDateTime(DateTime.Today), hours);
+        await RefreshAsync();
+    }
+}
