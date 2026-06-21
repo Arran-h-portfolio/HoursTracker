@@ -13,7 +13,6 @@
                     <input type="number" min="0" max="100" step="0.1" @bind="taxRatePercent" @bind:event="oninput" />
                 </label>
             </div>
-
         </div>
     </section>
 
@@ -29,19 +28,104 @@
         </div>
     </section>
 
+    <section class="main-background">
+        <div class="column-display">
+            <h2 class="secondary-headings">Pay Period</h2>
+
+            <div class="period-type-toggle">
+                <button class="@(payPeriodType == PayPeriodType.Monthly ? "toggle-btn active" : "toggle-btn")"
+                        @onclick="() => payPeriodType = PayPeriodType.Monthly">
+                    Monthly
+                </button>
+                <button class="@(payPeriodType == PayPeriodType.Weekly ? "toggle-btn active" : "toggle-btn")"
+                        @onclick="() => payPeriodType = PayPeriodType.Weekly">
+                    Weekly
+                </button>
+            </div>
+
+            @if (payPeriodType == PayPeriodType.Monthly)
+            {
+                <label class="secondary-headings">
+                    Period starts on day
+                    <input type="number" min="1" max="28" step="1" @bind="payPeriodStartDay" @bind:event="oninput" />
+                </label>
+                <p class="settings-hint">e.g. 1 = 1st of each month, 23 = 23rd of each month</p>
+            }
+            else
+            {
+                <label class="secondary-headings">
+                    Week starts on
+                    <select @bind="payPeriodStartDay">
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="0">Sunday</option>
+                    </select>
+                </label>
+            }
+        </div>
+    </section>
+
     <button class="btn-main" @onclick="SaveSettings">Save</button>
+
+    <section class="main-background">
+        <div class="column-display">
+            <h2 class="secondary-headings">Subscription</h2>
+            @if (isPremium)
+            {
+                <div class="subscription-badge premium">Premium Active</div>
+                <p class="settings-hint">You have full access to the Dashboard, yearly review, tax rundown and CSV export.</p>
+                <button class="btn-secondary" @onclick="TogglePremium">Deactivate Premium</button>
+            }
+            else
+            {
+                <div class="plan-compare">
+                    <div class="plan-card">
+                        <span class="plan-name">Free</span>
+                        <ul class="plan-features">
+                            <li>Daily shift logging</li>
+                            <li>Gross &amp; net earnings</li>
+                            <li>Tax calculator</li>
+                            <li>3-period history</li>
+                            <li>Period comparison</li>
+                        </ul>
+                    </div>
+                    <div class="plan-card premium-card">
+                        <span class="plan-name">Premium</span>
+                        <ul class="plan-features">
+                            <li>Everything in Free</li>
+                            <li>Full yearly review</li>
+                            <li>Earnings dashboard</li>
+                            <li>Tax rundown by period</li>
+                            <li>Export to CSV</li>
+                        </ul>
+                    </div>
+                </div>
+                <button class="btn-main" @onclick="TogglePremium">Upgrade to Premium</button>
+                <p class="settings-hint">In the published app this links to your App Store or Google Play subscription.</p>
+            }
+        </div>
+    </section>
 </body>
 
 @code {
     private double taxRatePercent;
     private double hourlyWage;
+    private PayPeriodType payPeriodType;
+    private int payPeriodStartDay;
+    private bool isPremium;
 
-    protected override async Task
-    OnInitializedAsync()
+    protected override async Task OnInitializedAsync()
     {
         var settings = await TrackerService.GetSettingsAsync();
         taxRatePercent = settings.TaxRate * 100;
         hourlyWage = settings.HourlyWage;
+        payPeriodType = settings.PayPeriodType;
+        payPeriodStartDay = settings.PayPeriodStartDay;
+        isPremium = settings.IsPremium;
     }
 
     private async Task SaveSettings()
@@ -49,14 +133,18 @@
         var settings = await TrackerService.GetSettingsAsync();
         settings.TaxRate = Math.Clamp(taxRatePercent, 0, 100) / 100.0;
         settings.HourlyWage = hourlyWage;
+        settings.PayPeriodType = payPeriodType;
+        settings.PayPeriodStartDay = payPeriodType == PayPeriodType.Monthly
+            ? Math.Clamp(payPeriodStartDay, 1, 28)
+            : Math.Clamp(payPeriodStartDay, 0, 6);
         await TrackerService.SaveSettingsAsync(settings);
     }
 
+    private async Task TogglePremium()
+    {
+        var settings = await TrackerService.GetSettingsAsync();
+        settings.IsPremium = !settings.IsPremium;
+        await TrackerService.SaveSettingsAsync(settings);
+        isPremium = settings.IsPremium;
+    }
 }
-
-@* OnInitializedAsync() is a Blazor lifecycle hook
-   that runs once when the page first loads - 
-   the right place to pull data from the database. 
-   the percentage to fraction conversion happens here
-   in the UI layer, keeping the stored 'TaxRate' a clean 0-1
-   fraction for the earnings math *@

@@ -1,0 +1,242 @@
+@page "/dashboard"
+@using Data.Models
+@using TradeLedger.Services
+@using Microsoft.Maui.ApplicationModel.DataTransfer
+@inject HoursTrackerService TrackerService
+
+<h1 class="main-headings">Dashboard</h1>
+
+<body>
+
+@if (!isPremium)
+{
+    <section class="main-background paywall-section">
+        <div class="paywall-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="paywall-icon" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+            </svg>
+            <h2 class="paywall-title">Premium Feature</h2>
+            <p class="paywall-body">Upgrade to TradeLedger Premium to unlock the full Dashboard — yearly earnings charts, monthly breakdowns, insights and CSV export.</p>
+            <a href="/settings" class="btn-main">View Plans</a>
+        </div>
+    </section>
+}
+else
+{
+    @* Year navigation *@
+    <section class="main-background">
+        <div class="year-nav">
+            <button class="btn-period-nav" title="Previous year" @onclick="PreviousYear">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+            </button>
+            <span class="year-label">@selectedYear</span>
+            <button class="btn-period-nav" title="Next year" @onclick="NextYear" disabled="@(selectedYear >= DateTime.Today.Year)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+            </button>
+        </div>
+    </section>
+
+    @* Yearly totals *@
+    <section class="main-background">
+        <div class="column-display">
+            <span class="secondary-headings">Yearly Summary</span>
+            <div class="yearly-stats-row">
+                <div class="yearly-stat-block">
+                    <span class="yearly-stat-label">Hours</span>
+                    <span class="yearly-stat-value">@yearlyHours.ToString("0.#")</span>
+                </div>
+                <div class="yearly-stat-divider"></div>
+                <div class="yearly-stat-block">
+                    <span class="yearly-stat-label">Gross</span>
+                    <span class="yearly-stat-value gross">£@yearlyGross.ToString("N0")</span>
+                </div>
+                <div class="yearly-stat-divider"></div>
+                <div class="yearly-stat-block">
+                    <span class="yearly-stat-label">Tax</span>
+                    <span class="yearly-stat-value tax">£@yearlyTax.ToString("N0")</span>
+                </div>
+                <div class="yearly-stat-divider"></div>
+                <div class="yearly-stat-block">
+                    <span class="yearly-stat-label">Net</span>
+                    <span class="yearly-stat-value net">£@yearlyNet.ToString("N0")</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @* Insights *@
+    @if (yearlyGross > 0)
+    {
+        <section class="main-background">
+            <div class="column-display">
+                <span class="secondary-headings">Insights</span>
+                <div class="insights-row">
+                    @if (bestMonth is not null)
+                    {
+                        <div class="insight-chip">
+                            <span class="insight-label">Best Month</span>
+                            <span class="insight-value">@bestMonth.Month.ToString("MMM")</span>
+                            <span class="insight-sub">£@bestMonth.Earnings.GrossEarnings.ToString("N0")</span>
+                        </div>
+                    }
+                    <div class="insight-chip">
+                        <span class="insight-label">Monthly Avg</span>
+                        <span class="insight-value">£@avgMonthlyEarnings.ToString("N0")</span>
+                        <span class="insight-sub">active months</span>
+                    </div>
+                    <div class="insight-chip">
+                        <span class="insight-label">Tax Rate</span>
+                        <span class="insight-value">@taxRatePct.ToString("0.#")%</span>
+                        <span class="insight-sub">£@yearlyTax.ToString("N0") owed</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+    }
+
+    @* Bar chart *@
+    <section class="main-background">
+        <div class="column-display">
+            <span class="secondary-headings">Monthly Earnings</span>
+            @if (yearlyGross == 0)
+            {
+                <p class="no-data-hint">No earnings recorded for @selectedYear.</p>
+            }
+            else
+            {
+                <div class="bar-chart-area">
+                    @foreach (var item in monthlyData)
+                    {
+                        var heightPx = BarHeightPx(item.Earnings.GrossEarnings);
+                        var isCurrent = item.Month.Year == DateTime.Today.Year && item.Month.Month == DateTime.Today.Month;
+                        <div class="bar-col">
+                            <div class="bar-fill @(isCurrent ? "current" : "")" style="height: @heightPx.ToString("0")px"></div>
+                            <span class="bar-month-label">@item.Month.ToString("MMM")</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </section>
+
+    @* Monthly breakdown table *@
+    <section class="main-background">
+        <div class="column-display">
+            <span class="secondary-headings">Monthly Breakdown</span>
+            <div class="breakdown-table">
+                <div class="breakdown-header">
+                    <span>Month</span>
+                    <span>Hrs</span>
+                    <span>Gross</span>
+                    <span>Tax</span>
+                    <span>Net</span>
+                </div>
+                @foreach (var item in monthlyData)
+                {
+                    var isCurrent = item.Month.Year == DateTime.Today.Year && item.Month.Month == DateTime.Today.Month;
+                    var hasData = item.Earnings.TotalHours > 0;
+                    <div class="breakdown-row @(isCurrent ? "current-row" : "") @(!hasData ? "empty-row" : "")">
+                        <span class="breakdown-month">@item.Month.ToString("MMM")</span>
+                        <span>@(hasData ? item.Earnings.TotalHours.ToString("0.#") : "—")</span>
+                        <span class="col-gross">@(hasData ? $"£{item.Earnings.GrossEarnings:N0}" : "—")</span>
+                        <span class="col-tax">@(hasData ? $"£{(item.Earnings.GrossEarnings - item.Earnings.NetEarnings):N0}" : "—")</span>
+                        <span class="col-net">@(hasData ? $"£{item.Earnings.NetEarnings:N0}" : "—")</span>
+                    </div>
+                }
+            </div>
+        </div>
+    </section>
+
+    @* Export *@
+    <section class="main-background">
+        <div class="column-display">
+            <span class="secondary-headings">Export Data</span>
+            <p class="export-hint">Download your complete earnings history as a CSV file, compatible with Excel and Google Sheets.</p>
+            <button class="btn-main export-btn" @onclick="ExportCsv" disabled="@isExporting">
+                @if (isExporting)
+                {
+                    <span>Preparing export…</span>
+                }
+                else
+                {
+                    <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" style="margin-right:6px;vertical-align:-2px" viewBox="0 0 16 16">
+                        <path d="M.5 9.9a.5.5 0 0 1 .5.5v2.5a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-2.5a.5.5 0 0 1 1 0v2.5a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2v-2.5a.5.5 0 0 1 .5-.5z"/>
+                        <path d="M7.646 11.854a.5.5 0 0 0 .708 0l3-3a.5.5 0 0 0-.708-.708L8.5 10.293V1.5a.5.5 0 0 0-1 0v8.793L5.354 8.146a.5.5 0 1 0-.708.708l3 3z"/>
+                    </svg>
+                    <span>Export CSV</span>
+                }
+            </button>
+        </div>
+    </section>
+}
+
+</body>
+
+@code {
+    private bool isPremium;
+    private int selectedYear = DateTime.Today.Year;
+    private List<MonthSummary> monthlyData = new();
+    private AppSettings currentSettings = new();
+    private bool isExporting;
+
+    private double yearlyGross   => monthlyData.Sum(m => m.Earnings.GrossEarnings);
+    private double yearlyTax     => monthlyData.Sum(m => m.Earnings.GrossEarnings - m.Earnings.NetEarnings);
+    private double yearlyNet     => monthlyData.Sum(m => m.Earnings.NetEarnings);
+    private double yearlyHours   => monthlyData.Sum(m => m.Earnings.TotalHours);
+    private double taxRatePct    => currentSettings.TaxRate * 100;
+    private double maxGross      => monthlyData.Any() ? Math.Max(monthlyData.Max(m => m.Earnings.GrossEarnings), 0.01) : 0.01;
+    private MonthSummary? bestMonth => monthlyData
+        .Where(m => m.Earnings.GrossEarnings > 0)
+        .OrderByDescending(m => m.Earnings.GrossEarnings)
+        .FirstOrDefault();
+    private double avgMonthlyEarnings
+    {
+        get
+        {
+            var active = monthlyData.Count(m => m.Earnings.TotalHours > 0);
+            return active > 0 ? yearlyGross / active : 0;
+        }
+    }
+
+    private const int ChartHeightPx = 110;
+    private double BarHeightPx(double gross) =>
+        gross <= 0 ? 2 : Math.Max(4, (gross / maxGross) * ChartHeightPx);
+
+    protected override async Task OnInitializedAsync() => await RefreshAsync();
+
+    private async Task RefreshAsync()
+    {
+        currentSettings = await TrackerService.GetSettingsAsync();
+        isPremium = currentSettings.IsPremium;
+        if (isPremium)
+            monthlyData = await TrackerService.GetYearlyHistoryAsync(selectedYear);
+    }
+
+    private async Task PreviousYear() { selectedYear--; await RefreshAsync(); }
+    private async Task NextYear()     { selectedYear++; await RefreshAsync(); }
+
+    private async Task ExportCsv()
+    {
+        isExporting = true;
+        try
+        {
+            var csv      = await TrackerService.GenerateCsvAsync();
+            var fileName = $"TradeLedger_{DateTime.Today:yyyy-MM-dd}.csv";
+            var filePath = Path.Combine(FileSystem.Current.CacheDirectory, fileName);
+            await File.WriteAllTextAsync(filePath, csv);
+            await Share.Default.RequestAsync(new ShareFileRequest
+            {
+                Title = "Export TradeLedger Data",
+                File  = new ShareFile(filePath)
+            });
+        }
+        finally
+        {
+            isExporting = false;
+        }
+    }
+}

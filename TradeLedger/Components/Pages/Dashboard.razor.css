@@ -1,0 +1,331 @@
+.main-headings {
+    color: var(--color-text);
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+}
+
+.main-background {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    padding: 20px 24px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.secondary-headings {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px 0;
+}
+
+.column-display {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ── Paywall ── */
+.paywall-section {
+    display: flex;
+    justify-content: center;
+}
+
+.paywall-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    max-width: 320px;
+    padding: 8px 0;
+}
+
+.paywall-icon {
+    color: var(--color-brand);
+    opacity: 0.7;
+}
+
+.paywall-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.paywall-body {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.btn-main {
+    background-color: var(--color-brand);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.15s;
+}
+
+.btn-main:hover {
+    background-color: var(--color-brand-hover);
+}
+
+/* ── Year nav ── */
+.year-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.year-label {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+}
+
+.btn-period-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-period-nav:hover:not([disabled]) {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    color: #FFFFFF;
+}
+
+.btn-period-nav[disabled] {
+    opacity: 0.35;
+    cursor: default;
+}
+
+/* ── Yearly stats row ── */
+.yearly-stats-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 4px;
+}
+
+.yearly-stat-block {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+}
+
+.yearly-stat-label {
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.yearly-stat-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+}
+
+.yearly-stat-value.gross { color: var(--color-text); }
+.yearly-stat-value.tax   { color: var(--color-danger); }
+.yearly-stat-value.net   { color: var(--color-success); }
+
+.yearly-stat-divider {
+    width: 1px;
+    height: 36px;
+    background-color: var(--color-border);
+    flex-shrink: 0;
+}
+
+/* ── Insights ── */
+.insights-row {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.insight-chip {
+    flex: 1;
+    min-width: 90px;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    background-color: var(--color-bg);
+}
+
+.insight-label {
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.insight-value {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.01em;
+}
+
+.insight-sub {
+    font-size: 0.72rem;
+    color: var(--color-muted);
+}
+
+/* ── Bar chart ── */
+.bar-chart-area {
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    width: 100%;
+    padding-top: 8px;
+}
+
+.bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.bar-fill {
+    width: 100%;
+    background-color: var(--color-brand);
+    border-radius: 3px 3px 0 0;
+    opacity: 0.75;
+    min-height: 2px;
+    transition: height 0.35s ease;
+}
+
+.bar-fill.current {
+    opacity: 1;
+    background-color: var(--color-brand);
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+}
+
+.bar-month-label {
+    font-size: 0.6rem;
+    color: var(--color-muted);
+    text-align: center;
+    white-space: nowrap;
+}
+
+.no-data-hint {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    text-align: center;
+    padding: 16px 0;
+    margin: 0;
+}
+
+/* ── Monthly breakdown table ── */
+.breakdown-table {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.breakdown-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 2fr 2fr 2fr;
+    gap: 4px;
+    padding: 0 0 8px 0;
+    border-bottom: 2px solid var(--color-border);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.breakdown-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 2fr 2fr 2fr;
+    gap: 4px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.82rem;
+    color: var(--color-text);
+    align-items: center;
+}
+
+.breakdown-row:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.breakdown-row.empty-row {
+    color: var(--color-muted);
+}
+
+.breakdown-row.current-row {
+    background-color: rgba(79, 70, 229, 0.05);
+    border-radius: 6px;
+    padding-left: 6px;
+    padding-right: 6px;
+    margin: 0 -6px;
+}
+
+.breakdown-month {
+    font-weight: 600;
+}
+
+.col-gross { color: var(--color-text); }
+.col-tax   { color: var(--color-danger); }
+.col-net   { color: var(--color-success); font-weight: 600; }
+
+/* ── Export ── */
+.export-hint {
+    font-size: 0.84rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.export-btn {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    margin-top: 4px;
+}
+
+.export-btn[disabled] {
+    opacity: 0.6;
+    cursor: default;
+}

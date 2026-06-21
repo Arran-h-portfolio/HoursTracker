@@ -1,0 +1,218 @@
+.main-headings {
+    color: var(--color-text);
+    text-align: center;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+}
+
+.main-background {
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+    padding: 20px 24px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+}
+
+.secondary-headings {
+    color: var(--color-muted);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 0 0 12px 0;
+}
+
+.column-display {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* ── Paywall ── */
+.paywall-section {
+    display: flex;
+    justify-content: center;
+}
+
+.paywall-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 12px;
+    max-width: 320px;
+    padding: 8px 0;
+}
+
+.paywall-icon {
+    color: var(--color-brand);
+    opacity: 0.7;
+}
+
+.paywall-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.paywall-body {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin: 0;
+    line-height: 1.5;
+}
+
+.btn-main {
+    background-color: var(--color-brand);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: background-color 0.15s;
+    align-self: flex-start;
+}
+
+.btn-main:hover {
+    background-color: var(--color-brand-hover);
+}
+
+/* ── Date range ── */
+.date-range-row {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+}
+
+.date-label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    gap: 6px;
+    flex: 1;
+    min-width: 130px;
+}
+
+input[type="date"] {
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    outline: none;
+    width: 100%;
+}
+
+input[type="date"]:focus {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+    border-color: var(--color-brand);
+}
+
+.date-error {
+    font-size: 0.82rem;
+    color: var(--color-danger);
+    margin: 0;
+}
+
+/* ── Tax summary grid ── */
+.tax-summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.tax-summary-block {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.tax-summary-block.highlight-tax {
+    background-color: rgba(239, 68, 68, 0.06);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 8px;
+    padding: 10px 12px;
+}
+
+.tax-summary-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.tax-summary-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-text);
+    letter-spacing: -0.02em;
+}
+
+.tax-summary-value.tax-value { color: var(--color-danger); }
+.tax-summary-value.net-value { color: var(--color-success); }
+
+.tax-divider-full {
+    grid-column: 1 / -1;
+    height: 1px;
+    background-color: var(--color-border);
+}
+
+/* ── Monthly breakdown table ── */
+.breakdown-table {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.breakdown-header {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 2fr 2fr 2fr;
+    gap: 4px;
+    padding: 0 0 8px 0;
+    border-bottom: 2px solid var(--color-border);
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.breakdown-row {
+    display: grid;
+    grid-template-columns: 2fr 1.5fr 2fr 2fr 2fr;
+    gap: 4px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--color-border);
+    font-size: 0.82rem;
+    color: var(--color-text);
+    align-items: center;
+}
+
+.breakdown-row.empty-row {
+    color: var(--color-muted);
+}
+
+.breakdown-row.total-row {
+    border-top: 2px solid var(--color-border);
+    border-bottom: none;
+    font-weight: 700;
+    padding-top: 10px;
+    padding-bottom: 0;
+}
+
+.breakdown-month { font-weight: 600; }
+.col-tax         { color: var(--color-danger); }
+.col-net         { color: var(--color-success); font-weight: 600; }

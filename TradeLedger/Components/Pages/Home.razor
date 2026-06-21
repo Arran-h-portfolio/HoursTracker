@@ -5,11 +5,27 @@
 
 <h1 class="main-headings">Salary Tracker</h1>
 <body>
-@*Card section for displaying hours logged, displayed in weeks*@
+@*Earnings card — shows stats for the selected pay period with navigation arrows*@
 <section class="main-background">
+    <div class="period-nav">
+        <button class="btn-period-nav" title="Previous period" @onclick="PreviousPeriod">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+            </svg>
+        </button>
+        <span class="period-label">@PeriodLabel</span>
+        <button class="btn-period-nav" title="Next period" @onclick="NextPeriod">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+        </button>
+    </div>
+
+    <div class="stat-divider"></div>
+
     <div class="column-display">
         <div class="stat-block">
-            <span class="secondary-headings">Total Hours</span>
+            <span class="secondary-headings">Hours This Period</span>
             <span class="stat-value">@totalHours.ToString("0.##") hrs</span>
         </div>
         @if (totalHours > 0 && grossEarnings == 0)
@@ -23,49 +39,111 @@
             <div class="stat-block">
                 <span class="secondary-headings">Gross Earnings</span>
                 <span class="stat-value earnings">£@grossEarnings.ToString("N2")</span>
+                @if (periodComparisonText is not null)
+                {
+                    <span class="period-comparison @(comparisonIsPositive ? "arrow-up" : "arrow-down")">
+                        @periodComparisonText
+                    </span>
+                }
+            </div>
+            <div class="stat-divider"></div>
+            <div class="stat-block">
+                <span class="secondary-headings">Tax This Period</span>
+                <span class="stat-value tax-amount">£@taxAmount.ToString("N2")</span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-block">
                 <span class="secondary-headings">Net Earnings</span>
                 <span class="stat-value net-earnings">£@netEarnings.ToString("N2")</span>
             </div>
-            <div class="stat-divider"></div>
-            <div class="stat-block">
-                <span class="secondary-headings">Month on Month</span>
-                <span class="stat-value">£50 <span class="@(isUp ? "arrow-up" : "arrow-down")">@(isUp ? "▲" : "▼")</span></span>
-            </div>
         }
     </div>
 </section>
-@*Card section displaying input for shift start and end with submit button to log the day*@
+
+@*Shift input card*@
 <section class="main-background">
     <div>
         <div class="row-display">
-        <label class="secondary-headings">Shift Start
-            <input type="time" @bind="shiftStart" />
-        </label>
-        <label class="secondary-headings">Shift End
-            <input type="time" @bind="shiftEnd" />
-        </label>
+            <label class="secondary-headings">Date
+                <input type="date" @bind="selectedDate" @bind:format="yyyy-MM-dd" />
+            </label>
+        </div>
+        <div class="row-display" style="margin-top: 12px;">
+            <label class="secondary-headings">Shift Start
+                <input type="time" @bind="shiftStart" />
+            </label>
+            <label class="secondary-headings">Shift End
+                <input type="time" @bind="shiftEnd" />
+            </label>
         </div>
         <button class="btn-main" @onclick="AddHours">Log Shift</button>
-
     </div>
 </section>
-@*Section for logging hours, displayed as list with days, hours worked*@
+
+@*Daily log*@
 <section class="main-background">
-    <div>
-        <div class="column-display">
-            <h2 class="secondary-headings">Daily Log</h2>
-            <ul class="log-list">
-                @foreach (var entry in hoursLogged.OrderByDescending(e => e.Key))
-                {
-                    <li>
-                        <span class="entry-date">@entry.Key.ToString("dddd, dd MMM yyyy")</span>
-                        <span class="entry-hours">@entry.Value.ToString("0.##") hrs</span>
-                    </li>
-                }
-            </ul>
+    <div class="column-display">
+        <h2 class="secondary-headings">Daily Log</h2>
+        <ul class="log-list">
+            @foreach (var entry in hoursLogged.Where(e => e.Key >= periodStart && e.Key <= periodEnd).OrderByDescending(e => e.Key))
+            {
+                <li>
+                    <span class="entry-date">@entry.Key.ToString("dddd, dd MMM yyyy")</span>
+                    <div class="entry-actions">
+                        @if (editingDate == entry.Key)
+                        {
+                            <input class="entry-edit-input" type="number" min="0" max="24" step="0.25"
+                                   @bind="editingHours" @bind:event="oninput" />
+                            <button class="btn-icon save" title="Save" @onclick="SaveEdit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon" title="Cancel" @onclick="CancelEdit">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                </svg>
+                            </button>
+                        }
+                        else
+                        {
+                            <span class="entry-hours">@entry.Value.ToString("0.##") hrs</span>
+                            <button class="btn-icon" title="Edit" @onclick="() => StartEdit(entry.Key, entry.Value)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
+                                </svg>
+                            </button>
+                            <button class="btn-icon danger" title="Delete" @onclick="() => DeleteEntry(entry.Key)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </button>
+                        }
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+</section>
+
+@*Recent periods history*@
+<section class="main-background">
+    <div class="column-display">
+        <h2 class="secondary-headings">Recent Periods</h2>
+        <div class="history-table">
+            @foreach (var row in recentPeriods)
+            {
+                <div class="history-row">
+                    <span class="history-period-label">@row.Label</span>
+                    <div class="history-stats">
+                        <span class="history-stat">@row.Hours.ToString("0.##") hrs</span>
+                        <span class="history-stat gross">£@row.Gross.ToString("N2")</span>
+                        <span class="history-stat tax">£@row.Tax.ToString("N2") tax</span>
+                        <span class="history-stat net">£@row.Net.ToString("N2") net</span>
+                    </div>
+                </div>
+            }
         </div>
     </div>
 </section>
@@ -75,10 +153,38 @@
     private Dictionary<DateOnly, double> hoursLogged = new();
     private double grossEarnings;
     private double netEarnings;
+    private double taxAmount;
     private double totalHours;
+    private string? periodComparisonText;
+    private bool comparisonIsPositive;
+    private List<(string Label, double Hours, double Gross, double Tax, double Net)> recentPeriods = new();
+    private DateTime selectedDate = DateTime.Today;
     private TimeOnly shiftStart = new TimeOnly(9, 0);
     private TimeOnly shiftEnd = TimeOnly.FromDateTime(DateTime.Now);
-    private bool isUp = true; // wire this to your real comparison later
+
+    private DateOnly? editingDate = null;
+    private double editingHours = 0;
+
+    private int periodOffset = 0;
+    private DateOnly periodStart;
+    private DateOnly periodEnd;
+    private AppSettings currentSettings = new();
+
+    private string PeriodLabel => FormatPeriodLabel(currentSettings, periodStart, periodEnd);
+
+    private static string FormatPeriodLabel(AppSettings settings, DateOnly start, DateOnly end)
+    {
+        if (settings.PayPeriodType == PayPeriodType.Weekly)
+        {
+            return start.Month == end.Month
+                ? $"{start.Day}–{end.Day} {start:MMM yyyy}"
+                : $"{start.Day} {start:MMM} – {end.Day} {end:MMM yyyy}";
+        }
+        // Monthly: if period starts on the 1st, "June 2026" is cleaner than "1 Jun – 30 Jun 2026"
+        return settings.PayPeriodStartDay == 1
+            ? start.ToString("MMMM yyyy")
+            : $"{start.Day} {start:MMM} – {end.Day} {end:MMM yyyy}";
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -87,18 +193,78 @@
 
     private async Task RefreshAsync()
     {
+        currentSettings = await TrackerService.GetSettingsAsync();
+        (periodStart, periodEnd) = HoursTrackerService.GetPayPeriodBounds(currentSettings, periodOffset);
+
         hoursLogged = await TrackerService.GetHoursLoggedAsync();
-        var summary = await TrackerService.GetEarningsSummaryAsync();
+        var summary = await TrackerService.GetPeriodEarningsSummaryAsync(periodStart, periodEnd);
         grossEarnings = summary.GrossEarnings;
         netEarnings = summary.NetEarnings;
+        taxAmount = grossEarnings - netEarnings;
         totalHours = summary.TotalHours;
+
+        var (prevStart, prevEnd) = HoursTrackerService.GetPayPeriodBounds(currentSettings, periodOffset - 1);
+        var prevSummary = await TrackerService.GetPeriodEarningsSummaryAsync(prevStart, prevEnd);
+        if (prevSummary.GrossEarnings == 0)
+        {
+            periodComparisonText = null;
+        }
+        else
+        {
+            var pct = ((grossEarnings - prevSummary.GrossEarnings) / prevSummary.GrossEarnings) * 100;
+            comparisonIsPositive = pct >= 0;
+            periodComparisonText = $"{(pct >= 0 ? "↑" : "↓")} {Math.Abs(pct):0.#}% vs last period";
+        }
+
+        recentPeriods = new();
+        for (int i = -2; i <= 0; i++)
+        {
+            var (s, e) = HoursTrackerService.GetPayPeriodBounds(currentSettings, i);
+            var sum = await TrackerService.GetPeriodEarningsSummaryAsync(s, e);
+            recentPeriods.Add((FormatPeriodLabel(currentSettings, s, e), sum.TotalHours, sum.GrossEarnings, sum.GrossEarnings - sum.NetEarnings, sum.NetEarnings));
+        }
+    }
+
+    private async Task PreviousPeriod()
+    {
+        periodOffset--;
+        await RefreshAsync();
+    }
+
+    private async Task NextPeriod()
+    {
+        periodOffset++;
+        await RefreshAsync();
     }
 
     public async Task AddHours()
     {
         double hours = (shiftEnd - shiftStart).TotalHours;
+        await TrackerService.LogHoursAsync(DateOnly.FromDateTime(selectedDate), hours);
+        await RefreshAsync();
+    }
 
-        await TrackerService.LogHoursAsync(DateOnly.FromDateTime(DateTime.Today), hours);
+    private void StartEdit(DateOnly date, double currentHours)
+    {
+        editingDate = date;
+        editingHours = currentHours;
+    }
+
+    private void CancelEdit() => editingDate = null;
+
+    private async Task SaveEdit()
+    {
+        if (editingDate is not null)
+        {
+            await TrackerService.LogHoursAsync(editingDate.Value, editingHours);
+            editingDate = null;
+            await RefreshAsync();
+        }
+    }
+
+    private async Task DeleteEntry(DateOnly date)
+    {
+        await TrackerService.DeleteHoursAsync(date);
         await RefreshAsync();
     }
 }

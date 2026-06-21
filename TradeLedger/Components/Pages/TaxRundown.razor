@@ -1,0 +1,148 @@
+@page "/tax-rundown"
+@using Data.Models
+@using TradeLedger.Services
+@inject HoursTrackerService TrackerService
+
+<h1 class="main-headings">Tax Rundown</h1>
+
+<body>
+
+@if (!isPremium)
+{
+    <section class="main-background paywall-section">
+        <div class="paywall-content">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="currentColor" class="paywall-icon" viewBox="0 0 16 16">
+                <path d="M8 1a2 2 0 0 1 2 2v4H6V3a2 2 0 0 1 2-2zm3 6V3a3 3 0 0 0-6 0v4a2 2 0 0 0-2 2v5a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2z"/>
+            </svg>
+            <h2 class="paywall-title">Premium Feature</h2>
+            <p class="paywall-body">Upgrade to TradeLedger Premium to run a detailed tax breakdown across any date range — perfect for filing your self-assessment.</p>
+            <a href="/settings" class="btn-main">View Plans</a>
+        </div>
+    </section>
+}
+else
+{
+    @* Date range selector *@
+    <section class="main-background">
+        <div class="column-display">
+            <h2 class="secondary-headings">Date Range</h2>
+            <div class="date-range-row">
+                <label class="date-label">
+                    From
+                    <input type="date" @bind="fromDate" @bind:format="yyyy-MM-dd" />
+                </label>
+                <label class="date-label">
+                    To
+                    <input type="date" @bind="toDate" @bind:format="yyyy-MM-dd" />
+                </label>
+            </div>
+            @if (dateError is not null)
+            {
+                <p class="date-error">@dateError</p>
+            }
+            <button class="btn-main" @onclick="Calculate">Calculate</button>
+        </div>
+    </section>
+
+    @* Results *@
+    @if (result is not null)
+    {
+        @* Summary card *@
+        <section class="main-background">
+            <div class="column-display">
+                <h2 class="secondary-headings">Tax Summary</h2>
+                <div class="tax-summary-grid">
+                    <div class="tax-summary-block">
+                        <span class="tax-summary-label">Total Hours</span>
+                        <span class="tax-summary-value">@result.Total.TotalHours.ToString("0.#") hrs</span>
+                    </div>
+                    <div class="tax-summary-block">
+                        <span class="tax-summary-label">Gross Earnings</span>
+                        <span class="tax-summary-value">£@result.Total.GrossEarnings.ToString("N2")</span>
+                    </div>
+                    <div class="tax-divider-full"></div>
+                    <div class="tax-summary-block highlight-tax">
+                        <span class="tax-summary-label">Tax Owed (@(taxRatePct.ToString("0.#"))%)</span>
+                        <span class="tax-summary-value tax-value">£@(result.Total.GrossEarnings - result.Total.NetEarnings).ToString("N2")</span>
+                    </div>
+                    <div class="tax-summary-block">
+                        <span class="tax-summary-label">Net Earnings</span>
+                        <span class="tax-summary-value net-value">£@result.Total.NetEarnings.ToString("N2")</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        @* Monthly breakdown *@
+        @if (result.Monthly.Count > 1)
+        {
+            <section class="main-background">
+                <div class="column-display">
+                    <h2 class="secondary-headings">Month by Month</h2>
+                    <div class="breakdown-table">
+                        <div class="breakdown-header">
+                            <span>Month</span>
+                            <span>Hrs</span>
+                            <span>Gross</span>
+                            <span>Tax</span>
+                            <span>Net</span>
+                        </div>
+                        @foreach (var row in result.Monthly)
+                        {
+                            var hasData = row.Earnings.TotalHours > 0;
+                            <div class="breakdown-row @(!hasData ? "empty-row" : "")">
+                                <span class="breakdown-month">@row.Month.ToString("MMM yy")</span>
+                                <span>@(hasData ? row.Earnings.TotalHours.ToString("0.#") : "—")</span>
+                                <span>@(hasData ? $"£{row.Earnings.GrossEarnings:N0}" : "—")</span>
+                                <span class="col-tax">@(hasData ? $"£{(row.Earnings.GrossEarnings - row.Earnings.NetEarnings):N0}" : "—")</span>
+                                <span class="col-net">@(hasData ? $"£{row.Earnings.NetEarnings:N0}" : "—")</span>
+                            </div>
+                        }
+                        <div class="breakdown-row total-row">
+                            <span class="breakdown-month">Total</span>
+                            <span>@result.Total.TotalHours.ToString("0.#")</span>
+                            <span>£@result.Total.GrossEarnings.ToString("N0")</span>
+                            <span class="col-tax">£@((result.Total.GrossEarnings - result.Total.NetEarnings).ToString("N0"))</span>
+                            <span class="col-net">£@result.Total.NetEarnings.ToString("N0")</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        }
+    }
+}
+
+</body>
+
+@code {
+    private bool isPremium;
+    private AppSettings currentSettings = new();
+    private DateTime fromDate = new DateTime(DateTime.Today.Year, 1, 1);
+    private DateTime toDate   = DateTime.Today;
+    private TaxRundownResult? result;
+    private string? dateError;
+
+    private double taxRatePct => currentSettings.TaxRate * 100;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentSettings = await TrackerService.GetSettingsAsync();
+        isPremium = currentSettings.IsPremium;
+    }
+
+    private async Task Calculate()
+    {
+        dateError = null;
+        var from = DateOnly.FromDateTime(fromDate);
+        var to   = DateOnly.FromDateTime(toDate);
+
+        if (from > to)
+        {
+            dateError = "Start date must be before end date.";
+            return;
+        }
+
+        currentSettings = await TrackerService.GetSettingsAsync();
+        result = await TrackerService.GetTaxRundownAsync(from, to);
+    }
+}
