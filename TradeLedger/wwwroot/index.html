@@ -9,6 +9,24 @@
     <link rel="stylesheet" href="app.css" />
     <link rel="stylesheet" href="TradeLedger.styles.css" />
     <link rel="icon" href="data:,">
+    <script>
+        // Apply saved theme before first paint to prevent flash
+        (function () {
+            var saved = localStorage.getItem('tl-theme') || 'system';
+            var effective = saved === 'system'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : saved;
+            document.documentElement.setAttribute('data-theme', effective);
+        })();
+
+        window.applyTheme = function (preference) {
+            localStorage.setItem('tl-theme', preference);
+            var effective = preference === 'system'
+                ? (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+                : preference;
+            document.documentElement.setAttribute('data-theme', effective);
+        };
+    </script>
 </head>
 
 <body>

@@ -2,6 +2,8 @@
 @using Data.Models
 @using TradeLedger.Services
 @inject HoursTrackerService TrackerService
+@inject NotificationService NotifService
+@inject IJSRuntime JS
 
 <body>
     <section class="main-background">
@@ -73,6 +75,57 @@
 
     <section class="main-background">
         <div class="column-display">
+            <h2 class="secondary-headings">Appearance</h2>
+            <div class="theme-toggle">
+                <button class="@ThemeClass("system")"  @onclick='() => SetTheme("system")'>System</button>
+                <button class="@ThemeClass("light")"   @onclick='() => SetTheme("light")'>Light</button>
+                <button class="@ThemeClass("dark")"    @onclick='() => SetTheme("dark")'>Dark</button>
+            </div>
+            <p class="settings-hint">System follows your device's dark/light mode setting.</p>
+        </div>
+    </section>
+
+    <section class="main-background">
+        <div class="column-display">
+            <h2 class="secondary-headings">Daily Reminder</h2>
+            <div class="notif-row">
+                <label class="notif-label">Remind me to log hours</label>
+                <button class="toggle-switch @(notificationsEnabled ? "on" : "")" @onclick="ToggleNotifications"
+                        role="switch" aria-checked="@notificationsEnabled">
+                    <span class="toggle-thumb"></span>
+                </button>
+            </div>
+            @if (notificationsEnabled)
+            {
+                <div class="notif-time-row">
+                    <label class="secondary-headings" style="text-transform:none;letter-spacing:normal;font-size:0.875rem;color:var(--color-text);">
+                        Reminder time
+                        <div class="time-select-group">
+                            <select @bind="notificationHour">
+                                @for (int h = 0; h < 24; h++)
+                                {
+                                    var display = h == 0 ? "12 AM" : h < 12 ? $"{h} AM" : h == 12 ? "12 PM" : $"{h - 12} PM";
+                                    <option value="@h">@display</option>
+                                }
+                            </select>
+                            <select @bind="notificationMinute">
+                                <option value="0">:00</option>
+                                <option value="15">:15</option>
+                                <option value="30">:30</option>
+                                <option value="45">:45</option>
+                            </select>
+                        </div>
+                    </label>
+                </div>
+                <button class="btn-main" style="align-self:flex-start;margin-top:4px" @onclick="SaveNotification">
+                    Save Reminder
+                </button>
+            }
+        </div>
+    </section>
+
+    <section class="main-background">
+        <div class="column-display">
             <h2 class="secondary-headings">Subscription</h2>
             @if (isPremium)
             {
@@ -117,15 +170,23 @@
     private PayPeriodType payPeriodType;
     private int payPeriodStartDay;
     private bool isPremium;
+    private string themePreference = "system";
+    private bool notificationsEnabled;
+    private int notificationHour   = 18;
+    private int notificationMinute = 0;
 
     protected override async Task OnInitializedAsync()
     {
         var settings = await TrackerService.GetSettingsAsync();
-        taxRatePercent = settings.TaxRate * 100;
-        hourlyWage = settings.HourlyWage;
-        payPeriodType = settings.PayPeriodType;
-        payPeriodStartDay = settings.PayPeriodStartDay;
-        isPremium = settings.IsPremium;
+        taxRatePercent      = settings.TaxRate * 100;
+        hourlyWage          = settings.HourlyWage;
+        payPeriodType       = settings.PayPeriodType;
+        payPeriodStartDay   = settings.PayPeriodStartDay;
+        isPremium           = settings.IsPremium;
+        themePreference     = settings.ThemePreference;
+        notificationsEnabled = settings.NotificationsEnabled;
+        notificationHour    = settings.NotificationHour;
+        notificationMinute  = settings.NotificationMinute;
     }
 
     private async Task SaveSettings()
@@ -138,6 +199,39 @@
             ? Math.Clamp(payPeriodStartDay, 1, 28)
             : Math.Clamp(payPeriodStartDay, 0, 6);
         await TrackerService.SaveSettingsAsync(settings);
+    }
+
+    private async Task SetTheme(string preference)
+    {
+        themePreference = preference;
+        var settings = await TrackerService.GetSettingsAsync();
+        settings.ThemePreference = preference;
+        await TrackerService.SaveSettingsAsync(settings);
+        await JS.InvokeVoidAsync("applyTheme", preference);
+    }
+
+    private string ThemeClass(string theme) =>
+        themePreference == theme ? "toggle-btn active" : "toggle-btn";
+
+    private async Task ToggleNotifications()
+    {
+        notificationsEnabled = !notificationsEnabled;
+        var settings = await TrackerService.GetSettingsAsync();
+        settings.NotificationsEnabled = notificationsEnabled;
+        await TrackerService.SaveSettingsAsync(settings);
+
+        if (!notificationsEnabled)
+            NotifService.CancelDailyReminder();
+    }
+
+    private async Task SaveNotification()
+    {
+        var settings = await TrackerService.GetSettingsAsync();
+        settings.NotificationHour   = notificationHour;
+        settings.NotificationMinute = notificationMinute;
+        settings.NotificationsEnabled = true;
+        await TrackerService.SaveSettingsAsync(settings);
+        await NotifService.ScheduleDailyReminderAsync(notificationHour, notificationMinute);
     }
 
     private async Task TogglePremium()

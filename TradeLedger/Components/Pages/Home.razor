@@ -26,7 +26,7 @@
     <div class="column-display">
         <div class="stat-block">
             <span class="secondary-headings">Hours This Period</span>
-            <span class="stat-value">@totalHours.ToString("0.##") hrs</span>
+            <span class="stat-value"><AnimatedNumber Value="@totalHours" Format="0.##" /> hrs</span>
         </div>
         @if (totalHours > 0 && grossEarnings == 0)
         {
@@ -38,7 +38,7 @@
             <div class="stat-divider"></div>
             <div class="stat-block">
                 <span class="secondary-headings">Gross Earnings</span>
-                <span class="stat-value earnings">£@grossEarnings.ToString("N2")</span>
+                <span class="stat-value earnings"><AnimatedNumber Value="@grossEarnings" Format="N2" Prefix="£" /></span>
                 @if (periodComparisonText is not null)
                 {
                     <span class="period-comparison @(comparisonIsPositive ? "arrow-up" : "arrow-down")">
@@ -49,12 +49,12 @@
             <div class="stat-divider"></div>
             <div class="stat-block">
                 <span class="secondary-headings">Tax This Period</span>
-                <span class="stat-value tax-amount">£@taxAmount.ToString("N2")</span>
+                <span class="stat-value tax-amount"><AnimatedNumber Value="@taxAmount" Format="N2" Prefix="£" /></span>
             </div>
             <div class="stat-divider"></div>
             <div class="stat-block">
                 <span class="secondary-headings">Net Earnings</span>
-                <span class="stat-value net-earnings">£@netEarnings.ToString("N2")</span>
+                <span class="stat-value net-earnings"><AnimatedNumber Value="@netEarnings" Format="N2" Prefix="£" /></span>
             </div>
         }
     </div>

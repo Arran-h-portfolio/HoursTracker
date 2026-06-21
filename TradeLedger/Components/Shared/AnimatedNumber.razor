@@ -1,0 +1,50 @@
+@implements IDisposable
+
+@Prefix@displayValue.ToString(Format)
+
+@code {
+    [Parameter] public double Value   { get; set; }
+    [Parameter] public string Format  { get; set; } = "N2";
+    [Parameter] public string Prefix  { get; set; } = "";
+
+    private double displayValue;
+    private double previousTarget;
+    private CancellationTokenSource? cts;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (Math.Abs(Value - previousTarget) < 0.001) return;
+
+        cts?.Cancel();
+        cts = new CancellationTokenSource();
+        var token = cts.Token;
+
+        var from = displayValue;
+        previousTarget = Value;
+        var to = Value;
+
+        try { await AnimateAsync(from, to, token); }
+        catch (OperationCanceledException) { }
+    }
+
+    private async Task AnimateAsync(double from, double to, CancellationToken ct)
+    {
+        const int steps   = 24;
+        const int delayMs = 20; // 480 ms total
+
+        for (int i = 1; i <= steps; i++)
+        {
+            ct.ThrowIfCancellationRequested();
+            var progress     = (double)i / steps;
+            var eased        = 1 - Math.Pow(1 - progress, 3); // ease-out cubic
+            displayValue     = from + (to - from) * eased;
+            StateHasChanged();
+            await Task.Delay(delayMs, ct);
+        }
+
+        displayValue = to;
+        StateHasChanged();
+    }
+
+    public void Dispose() => cts?.Cancel();
+}

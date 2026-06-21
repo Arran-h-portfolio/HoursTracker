@@ -16,4 +16,13 @@ public class AppSettings
     public int PayPeriodStartDay { get; set; } = 1;
 
     public bool IsPremium { get; set; } = false;
+
+    public bool IsOnboarded { get; set; } = false;
+
+    // "system", "light", or "dark"
+    public string ThemePreference { get; set; } = "system";
+
+    public bool NotificationsEnabled { get; set; } = false;
+    public int NotificationHour { get; set; } = 18;
+    public int NotificationMinute { get; set; } = 0;
 }

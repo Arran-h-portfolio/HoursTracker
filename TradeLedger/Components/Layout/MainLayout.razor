@@ -1,4 +1,7 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
+@inject TradeLedger.Services.HoursTrackerService TrackerService
+@inject NavigationManager Navigation
+@inject IJSRuntime JS
 
 <div class="page">
     <div class="sidebar">
@@ -6,10 +9,26 @@
     </div>
 
     <main>
-
-
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+@code {
+    protected override async Task OnInitializedAsync()
+    {
+        var settings = await TrackerService.GetSettingsAsync();
+        if (!settings.IsOnboarded)
+            Navigation.NavigateTo("/onboarding", forceLoad: false);
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var settings = await TrackerService.GetSettingsAsync();
+            await JS.InvokeVoidAsync("applyTheme", settings.ThemePreference);
+        }
+    }
+}

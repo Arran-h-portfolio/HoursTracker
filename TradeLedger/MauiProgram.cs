@@ -1,6 +1,7 @@
 ﻿using Data.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Plugin.LocalNotification;
 using TradeLedger.Services;
 
 namespace TradeLedger;
@@ -12,6 +13,7 @@ public static class MauiProgram
 		var builder = MauiApp.CreateBuilder();
 		builder
 			.UseMauiApp<App>()
+			.UseLocalNotification()
 			.ConfigureFonts(fonts =>
 			{
 				fonts.AddFont("OpenSans-Regular.ttf", "OpenSansRegular");
@@ -25,6 +27,7 @@ public static class MauiProgram
 			options.UseSqlite($"Data Source={dbPath}");
 		});
 		builder.Services.AddSingleton<HoursTrackerService>();
+		builder.Services.AddSingleton<NotificationService>();
 #if DEBUG
 		builder.Services.AddBlazorWebViewDeveloperTools();
 		builder.Logging.AddDebug();
@@ -42,6 +45,11 @@ public static class MauiProgram
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN PayPeriodType INTEGER NOT NULL DEFAULT 0"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN PayPeriodStartDay INTEGER NOT NULL DEFAULT 1"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN IsPremium INTEGER NOT NULL DEFAULT 0"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN IsOnboarded INTEGER NOT NULL DEFAULT 0"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN ThemePreference TEXT NOT NULL DEFAULT 'system'"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationsEnabled INTEGER NOT NULL DEFAULT 0"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationHour INTEGER NOT NULL DEFAULT 18"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationMinute INTEGER NOT NULL DEFAULT 0"); } catch { }
 		}
 
 		return app;

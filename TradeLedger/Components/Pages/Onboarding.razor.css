@@ -1,0 +1,256 @@
+.onboarding-page {
+    min-height: 100vh;
+    background-color: var(--color-bg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px 24px;
+}
+
+/* ── Screen wrapper ── */
+.ob-screen {
+    width: 100%;
+    max-width: 380px;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+}
+
+.animate-in {
+    animation: card-enter 0.4s ease both;
+}
+
+/* ── Welcome branding ── */
+.ob-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
+.ob-logo-icon {
+    color: var(--color-brand);
+    width: 56px;
+    height: 56px;
+}
+
+.ob-app-name {
+    font-size: 1.6rem;
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: -0.03em;
+    margin: 0;
+}
+
+/* ── Welcome hero copy ── */
+.ob-hero {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.ob-headline {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.ob-subline {
+    font-size: 0.95rem;
+    color: var(--color-muted);
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* ── Step indicator dots ── */
+.ob-step-indicator {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.step-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--color-border);
+    transition: background-color 0.2s;
+}
+
+.step-dot.active {
+    background-color: var(--color-brand);
+}
+
+/* ── Step content area ── */
+.ob-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.ob-step-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    color: var(--color-text);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+    margin: 0;
+}
+
+.ob-step-sub {
+    font-size: 0.875rem;
+    color: var(--color-muted);
+    margin: 0;
+}
+
+/* ── Inputs ── */
+.ob-input-group {
+    display: flex;
+    align-items: center;
+    border: 2px solid var(--color-border);
+    border-radius: 12px;
+    background-color: var(--color-surface);
+    overflow: hidden;
+    transition: border-color 0.15s;
+    margin-top: 4px;
+}
+
+.ob-input-group:focus-within {
+    border-color: var(--color-brand);
+}
+
+.ob-input-prefix,
+.ob-input-suffix {
+    padding: 14px 14px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-muted);
+    background-color: var(--color-bg);
+    border: none;
+    flex-shrink: 0;
+}
+
+.ob-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 14px 12px;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    min-width: 0;
+}
+
+.ob-input.small {
+    font-size: 1rem;
+    padding: 10px 12px;
+}
+
+/* ── Period toggle ── */
+.ob-period-toggle {
+    display: flex;
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.period-btn {
+    flex: 1;
+    padding: 10px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+}
+
+.period-btn.active {
+    background-color: var(--color-brand);
+    color: #FFFFFF;
+    font-weight: 600;
+}
+
+/* ── Label + select ── */
+.ob-label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+.ob-select {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    outline: none;
+}
+
+.ob-select:focus {
+    outline: 2px solid var(--color-brand);
+    border-color: var(--color-brand);
+}
+
+/* ── Navigation row ── */
+.ob-nav {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+/* ── Buttons ── */
+.btn-ob-primary {
+    flex: 1;
+    background-color: var(--color-brand);
+    color: #FFFFFF;
+    border: none;
+    border-radius: 12px;
+    padding: 15px 24px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+    letter-spacing: -0.01em;
+}
+
+.btn-ob-primary:hover {
+    background-color: var(--color-brand-hover);
+}
+
+.btn-ob-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-ob-primary[disabled] {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.btn-ob-back {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    padding: 15px 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--color-muted);
+    cursor: pointer;
+    transition: background-color 0.15s;
+    white-space: nowrap;
+}
+
+.btn-ob-back:hover {
+    background-color: var(--color-surface);
+    color: var(--color-text);
+}
