@@ -218,9 +218,85 @@ label.secondary-headings {
     margin-top: 2px;
 }
 
-.stat-value.tax-amount {
-    color: var(--color-danger);
+.stat-value.tax-amount      { color: var(--color-danger); }
+.stat-value.expenses-amount { color: var(--color-danger); }
+.stat-value.profit-amount   { color: var(--color-text); font-weight: 700; }
+
+/* ── Expense form ── */
+.text-input {
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    outline: none;
+    display: block;
+    margin-top: 6px;
+    width: 100%;
 }
+
+.text-input:focus {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+    border-color: var(--color-brand);
+}
+
+select {
+    border: 1px solid #CBD5E1;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+    color: var(--color-text);
+    background-color: var(--color-surface);
+    outline: none;
+    display: block;
+    margin-top: 6px;
+    width: 100%;
+}
+
+select:focus {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 1px;
+    border-color: var(--color-brand);
+}
+
+/* ── Expense list ── */
+.no-expenses-hint {
+    font-size: 0.84rem;
+    color: var(--color-muted);
+    text-align: center;
+    padding: 8px 0;
+    margin: 0;
+}
+
+.expense-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.expense-description {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+}
+
+.expense-chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.expense-chip.materials { background-color: #ECFDF5; color: #059669; }
+.expense-chip.travel    { background-color: #EFF6FF; color: #2563EB; }
+.expense-chip.equipment { background-color: #FFF7ED; color: #D97706; }
+.expense-chip.other     { background-color: #F8FAFC; color: var(--color-muted); }
+
+/* ── Recent periods — expenses line ── */
+.history-stat.expenses { color: var(--color-danger); }
 
 .entry-actions {
     display: flex;

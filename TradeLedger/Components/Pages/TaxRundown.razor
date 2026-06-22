@@ -60,10 +60,21 @@ else
                         <span class="tax-summary-label">Gross Earnings</span>
                         <span class="tax-summary-value">£@result.Total.GrossEarnings.ToString("N2")</span>
                     </div>
+                    @if (result.Total.TotalExpenses > 0)
+                    {
+                        <div class="tax-summary-block">
+                            <span class="tax-summary-label">Less Expenses</span>
+                            <span class="tax-summary-value expenses-value">-£@result.Total.TotalExpenses.ToString("N2")</span>
+                        </div>
+                        <div class="tax-summary-block">
+                            <span class="tax-summary-label">Taxable Profit</span>
+                            <span class="tax-summary-value">£@result.Total.TaxableProfit.ToString("N2")</span>
+                        </div>
+                    }
                     <div class="tax-divider-full"></div>
                     <div class="tax-summary-block highlight-tax">
                         <span class="tax-summary-label">Tax Owed (@(taxRatePct.ToString("0.#"))%)</span>
-                        <span class="tax-summary-value tax-value">£@(result.Total.GrossEarnings - result.Total.NetEarnings).ToString("N2")</span>
+                        <span class="tax-summary-value tax-value">£@result.Total.TaxAmount.ToString("N2")</span>
                     </div>
                     <div class="tax-summary-block">
                         <span class="tax-summary-label">Net Earnings</span>

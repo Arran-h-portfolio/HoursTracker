@@ -7,8 +7,9 @@ namespace TradeLedger.Services;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<AppSettings> Settings => Set<AppSettings>();
+    public DbSet<AppSettings> Settings  => Set<AppSettings>();
     public DbSet<HoursEntry> HoursEntries => Set<HoursEntry>();
+    public DbSet<Expense> Expenses => Set<Expense>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

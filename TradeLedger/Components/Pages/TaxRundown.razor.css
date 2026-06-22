@@ -161,8 +161,9 @@ input[type="date"]:focus {
     letter-spacing: -0.02em;
 }
 
-.tax-summary-value.tax-value { color: var(--color-danger); }
-.tax-summary-value.net-value { color: var(--color-success); }
+.tax-summary-value.tax-value      { color: var(--color-danger); }
+.tax-summary-value.expenses-value { color: var(--color-danger); }
+.tax-summary-value.net-value      { color: var(--color-success); }
 
 .tax-divider-full {
     grid-column: 1 / -1;

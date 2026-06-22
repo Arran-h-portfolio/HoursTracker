@@ -54,6 +54,14 @@ else
                     <span class="yearly-stat-label">Gross</span>
                     <span class="yearly-stat-value gross">£@yearlyGross.ToString("N0")</span>
                 </div>
+                @if (yearlyExpenses > 0)
+                {
+                    <div class="yearly-stat-divider"></div>
+                    <div class="yearly-stat-block">
+                        <span class="yearly-stat-label">Expenses</span>
+                        <span class="yearly-stat-value tax">£@yearlyExpenses.ToString("N0")</span>
+                    </div>
+                }
                 <div class="yearly-stat-divider"></div>
                 <div class="yearly-stat-block">
                     <span class="yearly-stat-label">Tax</span>
@@ -132,18 +140,18 @@ else
                     <span>Month</span>
                     <span>Hrs</span>
                     <span>Gross</span>
-                    <span>Tax</span>
+                    <span>Exp</span>
                     <span>Net</span>
                 </div>
                 @foreach (var item in monthlyData)
                 {
                     var isCurrent = item.Month.Year == DateTime.Today.Year && item.Month.Month == DateTime.Today.Month;
-                    var hasData = item.Earnings.TotalHours > 0;
+                    var hasData = item.Earnings.TotalHours > 0 || item.Earnings.TotalExpenses > 0;
                     <div class="breakdown-row @(isCurrent ? "current-row" : "") @(!hasData ? "empty-row" : "")">
                         <span class="breakdown-month">@item.Month.ToString("MMM")</span>
                         <span>@(hasData ? item.Earnings.TotalHours.ToString("0.#") : "—")</span>
                         <span class="col-gross">@(hasData ? $"£{item.Earnings.GrossEarnings:N0}" : "—")</span>
-                        <span class="col-tax">@(hasData ? $"£{(item.Earnings.GrossEarnings - item.Earnings.NetEarnings):N0}" : "—")</span>
+                        <span class="col-tax">@(item.Earnings.TotalExpenses > 0 ? $"£{item.Earnings.TotalExpenses:N0}" : "—")</span>
                         <span class="col-net">@(hasData ? $"£{item.Earnings.NetEarnings:N0}" : "—")</span>
                     </div>
                 }
@@ -183,10 +191,11 @@ else
     private AppSettings currentSettings = new();
     private bool isExporting;
 
-    private double yearlyGross   => monthlyData.Sum(m => m.Earnings.GrossEarnings);
-    private double yearlyTax     => monthlyData.Sum(m => m.Earnings.GrossEarnings - m.Earnings.NetEarnings);
-    private double yearlyNet     => monthlyData.Sum(m => m.Earnings.NetEarnings);
-    private double yearlyHours   => monthlyData.Sum(m => m.Earnings.TotalHours);
+    private double yearlyGross    => monthlyData.Sum(m => m.Earnings.GrossEarnings);
+    private double yearlyExpenses => monthlyData.Sum(m => m.Earnings.TotalExpenses);
+    private double yearlyTax      => monthlyData.Sum(m => m.Earnings.TaxAmount);
+    private double yearlyNet      => monthlyData.Sum(m => m.Earnings.NetEarnings);
+    private double yearlyHours    => monthlyData.Sum(m => m.Earnings.TotalHours);
     private double taxRatePct    => currentSettings.TaxRate * 100;
     private double maxGross      => monthlyData.Any() ? Math.Max(monthlyData.Max(m => m.Earnings.GrossEarnings), 0.01) : 0.01;
     private MonthSummary? bestMonth => monthlyData

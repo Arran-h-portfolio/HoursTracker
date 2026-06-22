@@ -46,6 +46,19 @@
                     </span>
                 }
             </div>
+            @if (totalExpenses > 0)
+            {
+                <div class="stat-divider"></div>
+                <div class="stat-block">
+                    <span class="secondary-headings">Less Expenses</span>
+                    <span class="stat-value expenses-amount">-£@totalExpenses.ToString("N2")</span>
+                </div>
+                <div class="stat-divider"></div>
+                <div class="stat-block">
+                    <span class="secondary-headings">Taxable Profit</span>
+                    <span class="stat-value profit-amount"><AnimatedNumber Value="@taxableProfit" Format="N2" Prefix="£" /></span>
+                </div>
+            }
             <div class="stat-divider"></div>
             <div class="stat-block">
                 <span class="secondary-headings">Tax This Period</span>
@@ -56,6 +69,76 @@
                 <span class="secondary-headings">Net Earnings</span>
                 <span class="stat-value net-earnings"><AnimatedNumber Value="@netEarnings" Format="N2" Prefix="£" /></span>
             </div>
+        }
+    </div>
+</section>
+
+@*Expense log form*@
+<section class="main-background">
+    <div class="column-display">
+        <h2 class="secondary-headings">Log Expense</h2>
+        <div class="row-display">
+            <label class="secondary-headings">Date
+                <input type="date" @bind="expenseDate" @bind:format="yyyy-MM-dd" />
+            </label>
+            <label class="secondary-headings">Amount (£)
+                <input type="number" min="0" max="99999" step="0.01" @bind="expenseAmount" @bind:event="oninput" />
+            </label>
+        </div>
+        <div class="row-display" style="margin-top:8px;">
+            <label class="secondary-headings">Category
+                <select @bind="expenseCategory">
+                    <option value="0">Materials</option>
+                    <option value="1">Travel</option>
+                    <option value="2">Equipment</option>
+                    <option value="3">Other</option>
+                </select>
+            </label>
+        </div>
+        <div class="row-display" style="margin-top:8px;">
+            <label class="secondary-headings" style="flex:1;">Description (optional)
+                <input type="text" class="text-input" maxlength="80" placeholder="e.g. Copper pipes"
+                       @bind="expenseDescription" @bind:event="oninput" />
+            </label>
+        </div>
+        <button class="btn-main" @onclick="AddExpense">Log Expense</button>
+    </div>
+</section>
+
+@*Expenses this period*@
+<section class="main-background">
+    <div class="column-display">
+        <h2 class="secondary-headings">Expenses This Period</h2>
+        @if (!expensesLogged.Any())
+        {
+            <p class="no-expenses-hint">No expenses logged this period.</p>
+        }
+        else
+        {
+            <ul class="log-list">
+                @foreach (var exp in expensesLogged)
+                {
+                    <li>
+                        <div class="expense-left">
+                            <span class="entry-date">@exp.Date.ToString("ddd, dd MMM")</span>
+                            @if (!string.IsNullOrWhiteSpace(exp.Description))
+                            {
+                                <span class="expense-description">@exp.Description</span>
+                            }
+                        </div>
+                        <div class="entry-actions">
+                            <span class="expense-chip @exp.Category.ToString().ToLower()">@exp.Category</span>
+                            <span class="entry-hours">£@exp.Amount.ToString("N2")</span>
+                            <button class="btn-icon danger" title="Delete" @onclick="() => DeleteExpense(exp.Id)">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                    <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
+                                    <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </li>
+                }
+            </ul>
         }
     </div>
 </section>
@@ -137,10 +220,14 @@
                 <div class="history-row">
                     <span class="history-period-label">@row.Label</span>
                     <div class="history-stats">
-                        <span class="history-stat">@row.Hours.ToString("0.##") hrs</span>
-                        <span class="history-stat gross">£@row.Gross.ToString("N2")</span>
-                        <span class="history-stat tax">£@row.Tax.ToString("N2") tax</span>
-                        <span class="history-stat net">£@row.Net.ToString("N2") net</span>
+                        <span class="history-stat">@row.Summary.TotalHours.ToString("0.##") hrs</span>
+                        <span class="history-stat gross">£@row.Summary.GrossEarnings.ToString("N2")</span>
+                        @if (row.Summary.TotalExpenses > 0)
+                        {
+                            <span class="history-stat expenses">-£@row.Summary.TotalExpenses.ToString("N2") exp</span>
+                        }
+                        <span class="history-stat tax">£@row.Summary.TaxAmount.ToString("N2") tax</span>
+                        <span class="history-stat net">£@row.Summary.NetEarnings.ToString("N2") net</span>
                     </div>
                 </div>
             }
@@ -150,17 +237,29 @@
 </body>
 
 @code {
+    // Earnings state
     private Dictionary<DateOnly, double> hoursLogged = new();
     private double grossEarnings;
-    private double netEarnings;
+    private double totalExpenses;
+    private double taxableProfit;
     private double taxAmount;
+    private double netEarnings;
     private double totalHours;
     private string? periodComparisonText;
     private bool comparisonIsPositive;
-    private List<(string Label, double Hours, double Gross, double Tax, double Net)> recentPeriods = new();
+    private List<(string Label, EarningsSummary Summary)> recentPeriods = new();
+
+    // Shift form
     private DateTime selectedDate = DateTime.Today;
     private TimeOnly shiftStart = new TimeOnly(9, 0);
     private TimeOnly shiftEnd = TimeOnly.FromDateTime(DateTime.Now);
+
+    // Expense form
+    private List<Expense> expensesLogged = new();
+    private DateTime expenseDate = DateTime.Today;
+    private double expenseAmount;
+    private int expenseCategory = (int)ExpenseCategory.Materials;
+    private string expenseDescription = string.Empty;
 
     private DateOnly? editingDate = null;
     private double editingHours = 0;
@@ -199,9 +298,13 @@
         hoursLogged = await TrackerService.GetHoursLoggedAsync();
         var summary = await TrackerService.GetPeriodEarningsSummaryAsync(periodStart, periodEnd);
         grossEarnings = summary.GrossEarnings;
-        netEarnings = summary.NetEarnings;
-        taxAmount = grossEarnings - netEarnings;
-        totalHours = summary.TotalHours;
+        totalExpenses = summary.TotalExpenses;
+        taxableProfit = summary.TaxableProfit;
+        taxAmount     = summary.TaxAmount;
+        netEarnings   = summary.NetEarnings;
+        totalHours    = summary.TotalHours;
+
+        expensesLogged = await TrackerService.GetExpensesInPeriodAsync(periodStart, periodEnd);
 
         var (prevStart, prevEnd) = HoursTrackerService.GetPayPeriodBounds(currentSettings, periodOffset - 1);
         var prevSummary = await TrackerService.GetPeriodEarningsSummaryAsync(prevStart, prevEnd);
@@ -221,7 +324,7 @@
         {
             var (s, e) = HoursTrackerService.GetPayPeriodBounds(currentSettings, i);
             var sum = await TrackerService.GetPeriodEarningsSummaryAsync(s, e);
-            recentPeriods.Add((FormatPeriodLabel(currentSettings, s, e), sum.TotalHours, sum.GrossEarnings, sum.GrossEarnings - sum.NetEarnings, sum.NetEarnings));
+            recentPeriods.Add((FormatPeriodLabel(currentSettings, s, e), sum));
         }
     }
 
@@ -265,6 +368,27 @@
     private async Task DeleteEntry(DateOnly date)
     {
         await TrackerService.DeleteHoursAsync(date);
+        await RefreshAsync();
+    }
+
+    private async Task AddExpense()
+    {
+        if (expenseAmount <= 0) return;
+        await TrackerService.LogExpenseAsync(new Expense
+        {
+            Date        = DateOnly.FromDateTime(expenseDate),
+            Amount      = expenseAmount,
+            Category    = (ExpenseCategory)expenseCategory,
+            Description = expenseDescription.Trim()
+        });
+        expenseAmount      = 0;
+        expenseDescription = string.Empty;
+        await RefreshAsync();
+    }
+
+    private async Task DeleteExpense(int id)
+    {
+        await TrackerService.DeleteExpenseAsync(id);
         await RefreshAsync();
     }
 }

@@ -24,7 +24,7 @@
             <div class="row-display">
                 <label class="secondary-headings">
                     Hourly Wage (£)
-                    <input type="number" min="0" step="0.01" @bind="hourlyWage" @bind:event="oninput" />
+                    <input type="number" min="0" max="999" step="0.01" @bind="hourlyWage" @bind:event="oninput" />
                 </label>
             </div>
         </div>
@@ -193,7 +193,7 @@
     {
         var settings = await TrackerService.GetSettingsAsync();
         settings.TaxRate = Math.Clamp(taxRatePercent, 0, 100) / 100.0;
-        settings.HourlyWage = hourlyWage;
+        settings.HourlyWage = Math.Clamp(hourlyWage, 0, 999);
         settings.PayPeriodType = payPeriodType;
         settings.PayPeriodStartDay = payPeriodType == PayPeriodType.Monthly
             ? Math.Clamp(payPeriodStartDay, 1, 28)

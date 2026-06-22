@@ -45,6 +45,13 @@ public static class MauiProgram
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN PayPeriodType INTEGER NOT NULL DEFAULT 0"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN PayPeriodStartDay INTEGER NOT NULL DEFAULT 1"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN IsPremium INTEGER NOT NULL DEFAULT 0"); } catch { }
+			db.Database.ExecuteSqlRaw(@"CREATE TABLE IF NOT EXISTS Expenses (
+				Id          INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+				Date        TEXT    NOT NULL,
+				Amount      REAL    NOT NULL DEFAULT 0,
+				Category    INTEGER NOT NULL DEFAULT 0,
+				Description TEXT    NOT NULL DEFAULT ''
+			)");
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN IsOnboarded INTEGER NOT NULL DEFAULT 0"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN ThemePreference TEXT NOT NULL DEFAULT 'system'"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationsEnabled INTEGER NOT NULL DEFAULT 0"); } catch { }
