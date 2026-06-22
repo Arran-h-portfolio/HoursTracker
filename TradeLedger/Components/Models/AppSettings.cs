@@ -25,4 +25,6 @@ public class AppSettings
     public bool NotificationsEnabled { get; set; } = false;
     public int NotificationHour { get; set; } = 18;
     public int NotificationMinute { get; set; } = 0;
+
+    public bool UseUKTax { get; set; } = false;
 }

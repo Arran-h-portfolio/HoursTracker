@@ -8,13 +8,30 @@
 <body>
     <section class="main-background">
         <div class="column-display">
-            <h2 class="secondary-headings">Tax Rate</h2>
-            <div class="row-display">
-                <label class="secondary-headings">
+            <h2 class="secondary-headings">Tax Mode</h2>
+            <div class="period-type-toggle">
+                <button class="@TaxModeClass(false)" @onclick="() => useUKTax = false">Simple</button>
+                <button class="@TaxModeClass(true)"  @onclick="() => useUKTax = true">UK Self-Employed</button>
+            </div>
+            @if (!useUKTax)
+            {
+                <label class="secondary-headings" style="margin-top:4px;">
                     Tax Rate (%)
                     <input type="number" min="0" max="100" step="0.1" @bind="taxRatePercent" @bind:event="oninput" />
                 </label>
-            </div>
+                <p class="settings-hint">A flat percentage applied to your taxable profit each period.</p>
+            }
+            else
+            {
+                <div class="uk-tax-info">
+                    <div class="uk-tax-line"><span class="uk-tax-key">Personal Allowance</span><span>£12,570 @@0%</span></div>
+                    <div class="uk-tax-line"><span class="uk-tax-key">Basic Rate</span><span>£12,571–£50,270 @@20%</span></div>
+                    <div class="uk-tax-line"><span class="uk-tax-key">Higher Rate</span><span>£50,271–£125,140 @@40%</span></div>
+                    <div class="uk-tax-line"><span class="uk-tax-key">Additional Rate</span><span>Above £125,140 @@45%</span></div>
+                    <div class="uk-tax-line"><span class="uk-tax-key">Class 4 NI</span><span>£12,571–£50,270 @@6%, above @@2%</span></div>
+                </div>
+                <p class="settings-hint">2024/25 UK rates. Class 2 NI abolished April 2024. Accurate tax shown in Tax Rundown only — period figures use your flat rate for quick reference.</p>
+            }
         </div>
     </section>
 
@@ -170,6 +187,7 @@
     private PayPeriodType payPeriodType;
     private int payPeriodStartDay;
     private bool isPremium;
+    private bool useUKTax;
     private string themePreference = "system";
     private bool notificationsEnabled;
     private int notificationHour   = 18;
@@ -178,15 +196,16 @@
     protected override async Task OnInitializedAsync()
     {
         var settings = await TrackerService.GetSettingsAsync();
-        taxRatePercent      = settings.TaxRate * 100;
-        hourlyWage          = settings.HourlyWage;
-        payPeriodType       = settings.PayPeriodType;
-        payPeriodStartDay   = settings.PayPeriodStartDay;
-        isPremium           = settings.IsPremium;
-        themePreference     = settings.ThemePreference;
+        taxRatePercent       = settings.TaxRate * 100;
+        hourlyWage           = settings.HourlyWage;
+        payPeriodType        = settings.PayPeriodType;
+        payPeriodStartDay    = settings.PayPeriodStartDay;
+        isPremium            = settings.IsPremium;
+        useUKTax             = settings.UseUKTax;
+        themePreference      = settings.ThemePreference;
         notificationsEnabled = settings.NotificationsEnabled;
-        notificationHour    = settings.NotificationHour;
-        notificationMinute  = settings.NotificationMinute;
+        notificationHour     = settings.NotificationHour;
+        notificationMinute   = settings.NotificationMinute;
     }
 
     private async Task SaveSettings()
@@ -198,6 +217,7 @@
         settings.PayPeriodStartDay = payPeriodType == PayPeriodType.Monthly
             ? Math.Clamp(payPeriodStartDay, 1, 28)
             : Math.Clamp(payPeriodStartDay, 0, 6);
+        settings.UseUKTax = useUKTax;
         await TrackerService.SaveSettingsAsync(settings);
     }
 
@@ -212,6 +232,9 @@
 
     private string ThemeClass(string theme) =>
         themePreference == theme ? "toggle-btn active" : "toggle-btn";
+
+    private string TaxModeClass(bool isUK) =>
+        useUKTax == isUK ? "toggle-btn active" : "toggle-btn";
 
     private async Task ToggleNotifications()
     {

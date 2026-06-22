@@ -57,6 +57,7 @@ public static class MauiProgram
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationsEnabled INTEGER NOT NULL DEFAULT 0"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationHour INTEGER NOT NULL DEFAULT 18"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationMinute INTEGER NOT NULL DEFAULT 0"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN UseUKTax INTEGER NOT NULL DEFAULT 0"); } catch { }
 		}
 
 		return app;

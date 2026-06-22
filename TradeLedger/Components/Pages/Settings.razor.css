@@ -295,3 +295,29 @@ select {
     background-color: var(--color-surface);
     color: var(--color-text);
 }
+
+/* ── UK tax rate display ── */
+.uk-tax-info {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 7px;
+    margin-top: 4px;
+    padding: 10px 14px;
+    background-color: var(--color-bg);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+}
+
+.uk-tax-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.82rem;
+    color: var(--color-text);
+}
+
+.uk-tax-key {
+    color: var(--color-muted);
+    font-weight: 500;
+}

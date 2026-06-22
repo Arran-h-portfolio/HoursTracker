@@ -73,6 +73,21 @@
     </div>
 </section>
 
+@*Year-to-date profit chip*@
+@if (ytdGross > 0)
+{
+    <section class="main-background ytd-card">
+        <div class="ytd-row">
+            <div class="ytd-block">
+                <span class="ytd-label">Tax Year to Date</span>
+                <span class="ytd-value">£@ytdProfit.ToString("N0") profit</span>
+                <span class="ytd-since">since 6 Apr @taxYearStartYear</span>
+            </div>
+            <a href="/tax-rundown" class="ytd-link">Tax Rundown →</a>
+        </div>
+    </section>
+}
+
 @*Expense log form*@
 <section class="main-background">
     <div class="column-display">
@@ -249,6 +264,12 @@
     private bool comparisonIsPositive;
     private List<(string Label, EarningsSummary Summary)> recentPeriods = new();
 
+    // Year-to-date chip
+    private double ytdGross;
+    private double ytdProfit;
+    private int taxYearStartYear => (DateTime.Today.Month > 4 || (DateTime.Today.Month == 4 && DateTime.Today.Day >= 6))
+                                    ? DateTime.Today.Year : DateTime.Today.Year - 1;
+
     // Shift form
     private DateTime selectedDate = DateTime.Today;
     private TimeOnly shiftStart = new TimeOnly(9, 0);
@@ -326,6 +347,10 @@
             var sum = await TrackerService.GetPeriodEarningsSummaryAsync(s, e);
             recentPeriods.Add((FormatPeriodLabel(currentSettings, s, e), sum));
         }
+
+        var ytd   = await TrackerService.GetYearToDateSummaryAsync();
+        ytdGross  = ytd.GrossEarnings;
+        ytdProfit = ytd.TaxableProfit;
     }
 
     private async Task PreviousPeriod()

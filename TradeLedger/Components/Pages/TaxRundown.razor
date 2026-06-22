@@ -40,7 +40,10 @@ else
             {
                 <p class="date-error">@dateError</p>
             }
-            <button class="btn-main" @onclick="Calculate">Calculate</button>
+            <div class="date-actions">
+                <button class="btn-secondary" @onclick="SetThisTaxYear">This Tax Year</button>
+                <button class="btn-main" @onclick="Calculate">Calculate</button>
+            </div>
         </div>
     </section>
 
@@ -72,15 +75,46 @@ else
                         </div>
                     }
                     <div class="tax-divider-full"></div>
-                    <div class="tax-summary-block highlight-tax">
-                        <span class="tax-summary-label">Tax Owed (@(taxRatePct.ToString("0.#"))%)</span>
-                        <span class="tax-summary-value tax-value">£@result.Total.TaxAmount.ToString("N2")</span>
-                    </div>
+                    @if (result.UKBreakdown is not null)
+                    {
+                        @* UK mode: show personal allowance, income tax and NI separately *@
+                        <div class="tax-summary-block">
+                            <span class="tax-summary-label">Personal Allowance</span>
+                            <span class="tax-summary-value">£@result.UKBreakdown.PersonalAllowanceUsed.ToString("N0") @@0%</span>
+                        </div>
+                        <div class="tax-summary-block">
+                            <span class="tax-summary-label">Income Tax</span>
+                            <span class="tax-summary-value tax-value">£@result.UKBreakdown.IncomeTax.ToString("N2")</span>
+                        </div>
+                        @if (result.UKBreakdown.ClassFourNI > 0)
+                        {
+                            <div class="tax-summary-block">
+                                <span class="tax-summary-label">Class 4 NI</span>
+                                <span class="tax-summary-value tax-value">£@result.UKBreakdown.ClassFourNI.ToString("N2")</span>
+                            </div>
+                        }
+                        <div class="tax-divider-full"></div>
+                        <div class="tax-summary-block highlight-tax">
+                            <span class="tax-summary-label">Total Tax Owed</span>
+                            <span class="tax-summary-value tax-value">£@result.Total.TaxAmount.ToString("N2")</span>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="tax-summary-block highlight-tax">
+                            <span class="tax-summary-label">Tax Owed (@(taxRatePct.ToString("0.#"))%)</span>
+                            <span class="tax-summary-value tax-value">£@result.Total.TaxAmount.ToString("N2")</span>
+                        </div>
+                    }
                     <div class="tax-summary-block">
                         <span class="tax-summary-label">Net Earnings</span>
                         <span class="tax-summary-value net-value">£@result.Total.NetEarnings.ToString("N2")</span>
                     </div>
                 </div>
+                @if (result.UKBreakdown is not null)
+                {
+                    <p class="uk-tax-note">2024/25 UK self-employed rates. Assumes this is your only income source.</p>
+                }
             </div>
         </section>
 
@@ -90,32 +124,55 @@ else
             <section class="main-background">
                 <div class="column-display">
                     <h2 class="secondary-headings">Month by Month</h2>
+                    @if (useUKTax)
+                    {
+                        <p class="uk-tax-note" style="text-align:left;margin:0 0 4px;">Tax is calculated on the period total above, not per month.</p>
+                    }
                     <div class="breakdown-table">
                         <div class="breakdown-header">
                             <span>Month</span>
                             <span>Hrs</span>
                             <span>Gross</span>
-                            <span>Tax</span>
-                            <span>Net</span>
+                            @if (useUKTax)
+                            {
+                                <span>Exp</span>
+                                <span>Profit</span>
+                            }
+                            else
+                            {
+                                <span>Tax</span>
+                                <span>Net</span>
+                            }
                         </div>
                         @foreach (var row in result.Monthly)
                         {
-                            var hasData = row.Earnings.TotalHours > 0;
+                            var hasData = row.Earnings.TotalHours > 0 || row.Earnings.TotalExpenses > 0;
                             <div class="breakdown-row @(!hasData ? "empty-row" : "")">
                                 <span class="breakdown-month">@row.Month.ToString("MMM yy")</span>
-                                <span>@(hasData ? row.Earnings.TotalHours.ToString("0.#") : "—")</span>
-                                <span>@(hasData ? $"£{row.Earnings.GrossEarnings:N0}" : "—")</span>
-                                <span class="col-tax">@(hasData ? $"£{(row.Earnings.GrossEarnings - row.Earnings.NetEarnings):N0}" : "—")</span>
-                                <span class="col-net">@(hasData ? $"£{row.Earnings.NetEarnings:N0}" : "—")</span>
+                                <span>@(row.Earnings.TotalHours > 0 ? row.Earnings.TotalHours.ToString("0.#") : "—")</span>
+                                <span>@(row.Earnings.TotalHours > 0 ? $"£{row.Earnings.GrossEarnings:N0}" : "—")</span>
+                                @if (useUKTax)
+                                {
+                                    <span class="col-tax">@(row.Earnings.TotalExpenses > 0 ? $"£{row.Earnings.TotalExpenses:N0}" : "—")</span>
+                                    <span class="col-net">@(row.Earnings.TotalHours > 0 ? $"£{row.Earnings.TaxableProfit:N0}" : "—")</span>
+                                }
+                                else
+                                {
+                                    <span class="col-tax">@(row.Earnings.TotalHours > 0 ? $"£{row.Earnings.TaxAmount:N0}" : "—")</span>
+                                    <span class="col-net">@(row.Earnings.TotalHours > 0 ? $"£{row.Earnings.NetEarnings:N0}" : "—")</span>
+                                }
                             </div>
                         }
-                        <div class="breakdown-row total-row">
-                            <span class="breakdown-month">Total</span>
-                            <span>@result.Total.TotalHours.ToString("0.#")</span>
-                            <span>£@result.Total.GrossEarnings.ToString("N0")</span>
-                            <span class="col-tax">£@((result.Total.GrossEarnings - result.Total.NetEarnings).ToString("N0"))</span>
-                            <span class="col-net">£@result.Total.NetEarnings.ToString("N0")</span>
-                        </div>
+                        @if (!useUKTax)
+                        {
+                            <div class="breakdown-row total-row">
+                                <span class="breakdown-month">Total</span>
+                                <span>@result.Total.TotalHours.ToString("0.#")</span>
+                                <span>£@result.Total.GrossEarnings.ToString("N0")</span>
+                                <span class="col-tax">£@result.Total.TaxAmount.ToString("N0")</span>
+                                <span class="col-net">£@result.Total.NetEarnings.ToString("N0")</span>
+                            </div>
+                        }
                     </div>
                 </div>
             </section>
@@ -127,6 +184,7 @@ else
 
 @code {
     private bool isPremium;
+    private bool useUKTax;
     private AppSettings currentSettings = new();
     private DateTime fromDate = new DateTime(DateTime.Today.Year, 1, 1);
     private DateTime toDate   = DateTime.Today;
@@ -139,6 +197,7 @@ else
     {
         currentSettings = await TrackerService.GetSettingsAsync();
         isPremium = currentSettings.IsPremium;
+        useUKTax  = currentSettings.UseUKTax;
     }
 
     private async Task Calculate()
@@ -154,6 +213,17 @@ else
         }
 
         currentSettings = await TrackerService.GetSettingsAsync();
-        result = await TrackerService.GetTaxRundownAsync(from, to);
+        useUKTax = currentSettings.UseUKTax;
+        result   = await TrackerService.GetTaxRundownAsync(from, to);
+    }
+
+    private async Task SetThisTaxYear()
+    {
+        var today     = DateTime.Today;
+        var startYear = (today.Month > 4 || (today.Month == 4 && today.Day >= 6))
+                        ? today.Year : today.Year - 1;
+        fromDate = new DateTime(startYear, 4, 6);
+        toDate   = today;
+        await Calculate();
     }
 }
