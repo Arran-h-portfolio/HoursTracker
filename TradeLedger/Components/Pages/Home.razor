@@ -6,7 +6,9 @@
 <h1 class="main-headings">Salary Tracker</h1>
 <body>
 @*Earnings card — shows stats for the selected pay period with navigation arrows*@
-<section class="main-background">
+<section class="main-background"
+         @ontouchstart="OnEarningsSwipeStart"
+         @ontouchend="OnEarningsSwipeEnd">
     <div class="period-nav">
         <button class="btn-period-nav" title="Previous period" @onclick="PreviousPeriod">
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
@@ -69,6 +71,24 @@
                 <span class="secondary-headings">Net Earnings</span>
                 <span class="stat-value net-earnings"><AnimatedNumber Value="@netEarnings" Format="N2" Prefix="£" /></span>
             </div>
+            @if (currentSettings.IsPremium && currentSettings.EarningsGoal > 0)
+            {
+                <div class="stat-divider"></div>
+                <div class="goal-block">
+                    <div class="goal-header">
+                        <span class="secondary-headings">Period Goal</span>
+                        <span class="goal-pct @(goalPercent >= 100 ? "goal-pct-achieved" : "")">
+                            @(goalPercent >= 100 ? "✓ Achieved" : $"{Math.Min(goalPercent, 100):F0}%")
+                        </span>
+                    </div>
+                    <div class="goal-track">
+                        <div class="goal-fill @(goalPercent >= 100 ? "achieved" : "")"
+                             style="width: @GoalFillWidth">
+                        </div>
+                    </div>
+                    <span class="goal-amounts">£@netEarnings.ToString("N0") of £@currentSettings.EarningsGoal.ToString("N0") net</span>
+                </div>
+            }
         }
     </div>
 </section>
@@ -126,7 +146,17 @@
         <h2 class="secondary-headings">Expenses This Period</h2>
         @if (!expensesLogged.Any())
         {
-            <p class="no-expenses-hint">No expenses logged this period.</p>
+            <div class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" fill="none">
+                    <path d="M14 8 H42 V40 L37 36 L32 40 L27 36 L22 40 L17 36 L14 40 Z"
+                          stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+                    <line x1="21" y1="18" x2="35" y2="18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="21" y1="25" x2="30" y2="25" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                    <line x1="21" y1="32" x2="33" y2="32" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <p class="empty-title">No expenses this period</p>
+                <p class="empty-subtitle">Track materials, travel and equipment below</p>
+            </div>
         }
         else
         {
@@ -182,8 +212,27 @@
 <section class="main-background">
     <div class="column-display">
         <h2 class="secondary-headings">Daily Log</h2>
+        @{
+            var periodEntries = hoursLogged
+                .Where(e => e.Key >= periodStart && e.Key <= periodEnd)
+                .OrderByDescending(e => e.Key)
+                .ToList();
+        }
+        @if (!periodEntries.Any())
+        {
+            <div class="empty-state">
+                <svg class="empty-icon" viewBox="0 0 56 56" xmlns="http://www.w3.org/2000/svg" fill="none">
+                    <circle cx="28" cy="28" r="20" stroke="currentColor" stroke-width="2.5"/>
+                    <circle cx="28" cy="28" r="2" fill="currentColor"/>
+                    <line x1="28" y1="28" x2="28" y2="13" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+                    <line x1="28" y1="28" x2="39" y2="28" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                </svg>
+                <p class="empty-title">No shifts this period</p>
+                <p class="empty-subtitle">Use the form below to log your first shift</p>
+            </div>
+        }
         <ul class="log-list">
-            @foreach (var entry in hoursLogged.Where(e => e.Key >= periodStart && e.Key <= periodEnd).OrderByDescending(e => e.Key))
+            @foreach (var entry in periodEntries)
             {
                 <li>
                     <span class="entry-date">@entry.Key.ToString("dddd, dd MMM yyyy")</span>
@@ -292,6 +341,14 @@
 
     private string PeriodLabel => FormatPeriodLabel(currentSettings, periodStart, periodEnd);
 
+    private double goalPercent => currentSettings.EarningsGoal > 0
+        ? (netEarnings / currentSettings.EarningsGoal) * 100
+        : 0;
+
+    private string GoalFillWidth =>
+        Math.Min(Math.Max(goalPercent, 0), 100)
+            .ToString("F1", System.Globalization.CultureInfo.InvariantCulture) + "%";
+
     private static string FormatPeriodLabel(AppSettings settings, DateOnly start, DateOnly end)
     {
         if (settings.PayPeriodType == PayPeriodType.Weekly)
@@ -353,6 +410,33 @@
         ytdProfit = ytd.TaxableProfit;
     }
 
+    // ── Period swipe gesture ──────────────────────────────────────────────────
+    private double _swipeStartX;
+    private double _swipeStartY;
+
+    private void OnEarningsSwipeStart(TouchEventArgs e)
+    {
+        if (e.ChangedTouches.Length > 0)
+        {
+            _swipeStartX = e.ChangedTouches[0].ClientX;
+            _swipeStartY = e.ChangedTouches[0].ClientY;
+        }
+    }
+
+    private async Task OnEarningsSwipeEnd(TouchEventArgs e)
+    {
+        if (e.ChangedTouches.Length == 0) return;
+        var dx = _swipeStartX - e.ChangedTouches[0].ClientX;
+        var dy = _swipeStartY - e.ChangedTouches[0].ClientY;
+        // Only fire if horizontal movement is dominant and exceeds 48px
+        if (Math.Abs(dx) > 48 && Math.Abs(dx) > Math.Abs(dy))
+        {
+            if (dx > 0) await NextPeriod();
+            else        await PreviousPeriod();
+        }
+    }
+
+    // ── Navigation ────────────────────────────────────────────────────────────
     private async Task PreviousPeriod()
     {
         periodOffset--;
@@ -365,8 +449,10 @@
         await RefreshAsync();
     }
 
+    // ── Mutating actions (all trigger a light haptic tap) ─────────────────────
     public async Task AddHours()
     {
+        Haptic(HapticFeedbackType.Click);
         double hours = (shiftEnd - shiftStart).TotalHours;
         await TrackerService.LogHoursAsync(DateOnly.FromDateTime(selectedDate), hours);
         await RefreshAsync();
@@ -384,6 +470,7 @@
     {
         if (editingDate is not null)
         {
+            Haptic(HapticFeedbackType.Click);
             await TrackerService.LogHoursAsync(editingDate.Value, editingHours);
             editingDate = null;
             await RefreshAsync();
@@ -392,6 +479,7 @@
 
     private async Task DeleteEntry(DateOnly date)
     {
+        Haptic(HapticFeedbackType.LongPress);
         await TrackerService.DeleteHoursAsync(date);
         await RefreshAsync();
     }
@@ -399,6 +487,7 @@
     private async Task AddExpense()
     {
         if (expenseAmount <= 0) return;
+        Haptic(HapticFeedbackType.Click);
         await TrackerService.LogExpenseAsync(new Expense
         {
             Date        = DateOnly.FromDateTime(expenseDate),
@@ -413,7 +502,13 @@
 
     private async Task DeleteExpense(int id)
     {
+        Haptic(HapticFeedbackType.LongPress);
         await TrackerService.DeleteExpenseAsync(id);
         await RefreshAsync();
+    }
+
+    private static void Haptic(HapticFeedbackType type)
+    {
+        try { HapticFeedback.Default.Perform(type); } catch { }
     }
 }

@@ -2,31 +2,16 @@
     position: relative;
     display: flex;
     flex-direction: column;
+    min-height: 100vh;
 }
 
 main {
     flex: 1;
-}
-
-.sidebar {
-    background-color: var(--color-sidebar);
-    background-image: none;
+    /* keep content above the fixed bottom tab bar */
+    padding-bottom: calc(84px + env(safe-area-inset-bottom));
 }
 
 .empty-shell {
     min-height: 100vh;
     background-color: var(--color-bg);
-}
-
-@media (min-width: 641px) {
-    .page {
-        flex-direction: row;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
 }

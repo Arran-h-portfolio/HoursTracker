@@ -27,4 +27,7 @@ public class AppSettings
     public int NotificationMinute { get; set; } = 0;
 
     public bool UseUKTax { get; set; } = false;
+
+    // Premium: net earnings target for the current pay period (0 = disabled)
+    public double EarningsGoal { get; set; } = 0;
 }

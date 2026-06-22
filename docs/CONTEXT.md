@@ -58,6 +58,7 @@ These are available to all users with no subscription required.
 All standard features are included. The following are locked behind a subscription.
 
 - **Expense tracking** — log business expenses (Materials, Travel, Equipment, Other) with date, amount, and optional description. Expenses are subtracted from gross earnings to produce an accurate taxable profit figure. The earnings card shows the full calculation chain: Gross → Less Expenses → Taxable Profit → Tax → Net
+- **Period earnings goal** — set a net earnings target per pay period in Settings (Premium section). Home screen shows a labelled progress bar (brand indigo → green on achievement) beneath the Net Earnings stat. `EarningsGoal` stored in Settings table; 0 = disabled.
 - **Yearly Dashboard** — a dedicated analytics page showing:
   - Year navigation (browse any past year)
   - Yearly summary: total hours, gross earnings, total expenses, tax owed, net earnings
@@ -119,11 +120,27 @@ Premium pages show a paywall card with a lock icon and a link to Settings when a
 - Animated number count-up on earnings figures (`AnimatedNumber` shared component)
 - No unnecessary complexity — the UI should feel immediately obvious to a non-technical user
 
+## Navigation
+
+- **Bottom tab bar** (fixed, replaces the original sidebar) — four tabs: Home / Dashboard / Tax / Settings. Inline SVG icons coloured with `currentColor`; active tab shows brand indigo with a subtle scale-up on the icon. Respects iOS safe-area inset at the bottom. Implemented in `NavMenu.razor` / `NavMenu.razor.css`.
+- Onboarding uses `EmptyLayout` (no tab bar shown).
+
+## Mobile UX
+
+- **Haptic feedback** — `HapticFeedback.Default.Perform()` fires on every mutating action in Home: Log Shift (`Click`), Log Expense (`Click`), Save Edit (`Click`), Delete shift/expense (`LongPress`). Wrapped in try/catch for platform safety.
+- **Swipe-to-navigate periods** — horizontal swipe on the earnings card (Home page) calls `PreviousPeriod` / `NextPeriod`.
+- **Illustrated empty states** — inline SVG illustrations shown when no shifts (clock icon) or no expenses (receipt icon) are logged for the current period, replacing blank list areas. Fires only when horizontal delta > 48 px and dominates vertical delta, so normal page scroll is unaffected. Touch handlers: `OnEarningsSwipeStart` / `OnEarningsSwipeEnd`.
+
+## Branding
+
+- **App icon** — indigo gradient background (`#6366F1` → `#3730A3`); white coin/badge circle foreground with bold `£` mark in brand indigo. Pure SVG paths, no text elements, scales cleanly to all sizes.
+- **Splash screen** — same `£` badge mark centred above a "TradeLedger" wordmark and tagline, on `#4F46E5` indigo background. `BaseSize="360,360"`.
+
 ---
 
 ## What Is Not Yet Built (Planned Next Steps)
 
 1. **Real in-app purchase billing** — replace the manual `IsPremium` toggle with Google Play Billing and Apple StoreKit so the subscription is actually charged through the app stores
-2. **App icon and splash screen** — current assets are the default MAUI placeholders; needs branded TradeLedger artwork
-3. **UK tax band calculation** — replace the flat tax rate with an accurate UK self-assessment calculation (personal allowance, income tax bands, Class 4 NI) so the tax figure is genuinely correct for UK self-employed users
-4. **Cloud backup / sync** — local-only storage means data is lost if the device is replaced; iCloud or Google Drive backup would build user trust significantly
+2. **Cloud backup / sync** — local-only storage means data is lost if the device is replaced; iCloud or Google Drive backup would build user trust significantly
+3. **UK tax personal allowance taper above £100k** — not currently modelled; low priority for v1
+5. **UK tax personal allowance taper above £100k** — not currently modelled; low priority for v1

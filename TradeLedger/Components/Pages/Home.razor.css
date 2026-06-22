@@ -347,6 +347,86 @@ select:focus {
     text-decoration: underline;
 }
 
+/* ── Goal progress bar ── */
+.goal-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    width: 100%;
+}
+
+.goal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.goal-pct {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--color-brand);
+}
+
+.goal-pct-achieved {
+    color: var(--color-success);
+}
+
+.goal-track {
+    width: 100%;
+    height: 8px;
+    background-color: var(--color-border);
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+.goal-fill {
+    height: 100%;
+    background-color: var(--color-brand);
+    border-radius: 999px;
+    transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.goal-fill.achieved {
+    background-color: var(--color-success);
+}
+
+.goal-amounts {
+    font-size: 0.78rem;
+    color: var(--color-muted);
+    text-align: center;
+}
+
+/* ── Empty states ── */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 28px 16px 20px;
+    width: 100%;
+    color: var(--color-muted);
+}
+
+.empty-icon {
+    width: 52px;
+    height: 52px;
+    opacity: 0.45;
+}
+
+.empty-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.empty-subtitle {
+    font-size: 0.82rem;
+    color: var(--color-muted);
+    margin: 0;
+    text-align: center;
+}
+
 /* ── Recent periods — expenses line ── */
 .history-stat.expenses { color: var(--color-danger); }
 

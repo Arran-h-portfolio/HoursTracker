@@ -147,6 +147,17 @@
             @if (isPremium)
             {
                 <div class="subscription-badge premium">Premium Active</div>
+
+                <label class="secondary-headings" style="width:100%;margin-top:12px;">
+                    Period Earnings Goal (£)
+                    <input type="number" min="0" max="99999" step="10"
+                           @bind="earningsGoal" @bind:event="oninput" />
+                </label>
+                <p class="settings-hint">
+                    Your net earnings target per @(payPeriodType == PayPeriodType.Weekly ? "week" : "month").
+                    A progress bar appears on the Home screen. Set to 0 to hide it.
+                </p>
+
                 <p class="settings-hint">You have full access to the Dashboard, yearly review, tax rundown and CSV export.</p>
                 <button class="btn-secondary" @onclick="TogglePremium">Deactivate Premium</button>
             }
@@ -167,6 +178,7 @@
                         <span class="plan-name">Premium</span>
                         <ul class="plan-features">
                             <li>Everything in Free</li>
+                            <li>Earnings goal &amp; progress bar</li>
                             <li>Full yearly review</li>
                             <li>Earnings dashboard</li>
                             <li>Tax rundown by period</li>
@@ -188,6 +200,7 @@
     private int payPeriodStartDay;
     private bool isPremium;
     private bool useUKTax;
+    private double earningsGoal;
     private string themePreference = "system";
     private bool notificationsEnabled;
     private int notificationHour   = 18;
@@ -202,6 +215,7 @@
         payPeriodStartDay    = settings.PayPeriodStartDay;
         isPremium            = settings.IsPremium;
         useUKTax             = settings.UseUKTax;
+        earningsGoal         = settings.EarningsGoal;
         themePreference      = settings.ThemePreference;
         notificationsEnabled = settings.NotificationsEnabled;
         notificationHour     = settings.NotificationHour;
@@ -217,7 +231,8 @@
         settings.PayPeriodStartDay = payPeriodType == PayPeriodType.Monthly
             ? Math.Clamp(payPeriodStartDay, 1, 28)
             : Math.Clamp(payPeriodStartDay, 0, 6);
-        settings.UseUKTax = useUKTax;
+        settings.UseUKTax      = useUKTax;
+        settings.EarningsGoal  = Math.Max(earningsGoal, 0);
         await TrackerService.SaveSettingsAsync(settings);
     }
 
