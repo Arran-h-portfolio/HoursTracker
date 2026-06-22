@@ -57,21 +57,21 @@ else
                 <div class="tax-summary-grid">
                     <div class="tax-summary-block">
                         <span class="tax-summary-label">Total Hours</span>
-                        <span class="tax-summary-value">@result.Total.TotalHours.ToString("0.#") hrs</span>
+                        <span class="tax-summary-value"><AnimatedNumber Value="@result.Total.TotalHours" Format="0.#" /> hrs</span>
                     </div>
                     <div class="tax-summary-block">
                         <span class="tax-summary-label">Gross Earnings</span>
-                        <span class="tax-summary-value">£@result.Total.GrossEarnings.ToString("N2")</span>
+                        <span class="tax-summary-value"><AnimatedNumber Value="@result.Total.GrossEarnings" Format="N2" Prefix="£" /></span>
                     </div>
                     @if (result.Total.TotalExpenses > 0)
                     {
                         <div class="tax-summary-block">
                             <span class="tax-summary-label">Less Expenses</span>
-                            <span class="tax-summary-value expenses-value">-£@result.Total.TotalExpenses.ToString("N2")</span>
+                            <span class="tax-summary-value expenses-value"><AnimatedNumber Value="@result.Total.TotalExpenses" Format="N2" Prefix="-£" /></span>
                         </div>
                         <div class="tax-summary-block">
                             <span class="tax-summary-label">Taxable Profit</span>
-                            <span class="tax-summary-value">£@result.Total.TaxableProfit.ToString("N2")</span>
+                            <span class="tax-summary-value"><AnimatedNumber Value="@result.Total.TaxableProfit" Format="N2" Prefix="£" /></span>
                         </div>
                     }
                     <div class="tax-divider-full"></div>
@@ -80,35 +80,35 @@ else
                         @* UK mode: show personal allowance, income tax and NI separately *@
                         <div class="tax-summary-block">
                             <span class="tax-summary-label">Personal Allowance</span>
-                            <span class="tax-summary-value">£@result.UKBreakdown.PersonalAllowanceUsed.ToString("N0") @@0%</span>
+                            <span class="tax-summary-value"><AnimatedNumber Value="@result.UKBreakdown.PersonalAllowanceUsed" Format="N0" Prefix="£" /> @@0%</span>
                         </div>
                         <div class="tax-summary-block">
                             <span class="tax-summary-label">Income Tax</span>
-                            <span class="tax-summary-value tax-value">£@result.UKBreakdown.IncomeTax.ToString("N2")</span>
+                            <span class="tax-summary-value tax-value"><AnimatedNumber Value="@result.UKBreakdown.IncomeTax" Format="N2" Prefix="£" /></span>
                         </div>
                         @if (result.UKBreakdown.ClassFourNI > 0)
                         {
                             <div class="tax-summary-block">
                                 <span class="tax-summary-label">Class 4 NI</span>
-                                <span class="tax-summary-value tax-value">£@result.UKBreakdown.ClassFourNI.ToString("N2")</span>
+                                <span class="tax-summary-value tax-value"><AnimatedNumber Value="@result.UKBreakdown.ClassFourNI" Format="N2" Prefix="£" /></span>
                             </div>
                         }
                         <div class="tax-divider-full"></div>
                         <div class="tax-summary-block highlight-tax">
                             <span class="tax-summary-label">Total Tax Owed</span>
-                            <span class="tax-summary-value tax-value">£@result.Total.TaxAmount.ToString("N2")</span>
+                            <span class="tax-summary-value tax-value"><AnimatedNumber Value="@result.Total.TaxAmount" Format="N2" Prefix="£" /></span>
                         </div>
                     }
                     else
                     {
                         <div class="tax-summary-block highlight-tax">
                             <span class="tax-summary-label">Tax Owed (@(taxRatePct.ToString("0.#"))%)</span>
-                            <span class="tax-summary-value tax-value">£@result.Total.TaxAmount.ToString("N2")</span>
+                            <span class="tax-summary-value tax-value"><AnimatedNumber Value="@result.Total.TaxAmount" Format="N2" Prefix="£" /></span>
                         </div>
                     }
                     <div class="tax-summary-block">
                         <span class="tax-summary-label">Net Earnings</span>
-                        <span class="tax-summary-value net-value">£@result.Total.NetEarnings.ToString("N2")</span>
+                        <span class="tax-summary-value net-value"><AnimatedNumber Value="@result.Total.NetEarnings" Format="N2" Prefix="£" /></span>
                     </div>
                 </div>
                 @if (result.UKBreakdown is not null)

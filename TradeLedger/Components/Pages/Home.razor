@@ -204,6 +204,13 @@
                 <input type="time" @bind="shiftEnd" />
             </label>
         </div>
+        <div class="row-display" style="margin-top: 8px;">
+            <label class="secondary-headings" style="flex:1;">Job (optional)
+                <input type="text" class="text-input" maxlength="50"
+                       placeholder="e.g. Boiler repair, Morning client"
+                       @bind="jobLabel" @bind:event="oninput" />
+            </label>
+        </div>
         <button class="btn-main" @onclick="AddHours">Log Shift</button>
     </div>
 </section>
@@ -214,8 +221,9 @@
         <h2 class="secondary-headings">Daily Log</h2>
         @{
             var periodEntries = hoursLogged
-                .Where(e => e.Key >= periodStart && e.Key <= periodEnd)
-                .OrderByDescending(e => e.Key)
+                .Where(e => e.Date >= periodStart && e.Date <= periodEnd)
+                .OrderByDescending(e => e.Date)
+                .ThenBy(e => e.StartTime)
                 .ToList();
         }
         @if (!periodEntries.Any())
@@ -234,41 +242,68 @@
         <ul class="log-list">
             @foreach (var entry in periodEntries)
             {
-                <li>
-                    <span class="entry-date">@entry.Key.ToString("dddd, dd MMM yyyy")</span>
-                    <div class="entry-actions">
-                        @if (editingDate == entry.Key)
-                        {
-                            <input class="entry-edit-input" type="number" min="0" max="24" step="0.25"
-                                   @bind="editingHours" @bind:event="oninput" />
-                            <button class="btn-icon save" title="Save" @onclick="SaveEdit">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
-                                </svg>
-                            </button>
-                            <button class="btn-icon" title="Cancel" @onclick="CancelEdit">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
-                                    <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
-                                </svg>
-                            </button>
-                        }
-                        else
-                        {
-                            <span class="entry-hours">@entry.Value.ToString("0.##") hrs</span>
-                            <button class="btn-icon" title="Edit" @onclick="() => StartEdit(entry.Key, entry.Value)">
+                @if (editingId == entry.Id)
+                {
+                    <li class="editing">
+                        <div class="entry-edit-form">
+                            <div class="entry-edit-header">
+                                <span class="entry-date">@entry.Date.ToString("dddd, dd MMM yyyy")</span>
+                                <div class="entry-actions">
+                                    <button class="btn-icon save" title="Save" @onclick="SaveEdit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                                        </svg>
+                                    </button>
+                                    <button class="btn-icon" title="Cancel" @onclick="CancelEdit">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
+                                            <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="entry-edit-row">
+                                <label class="secondary-headings">Start
+                                    <input type="time" @bind="editingStart" />
+                                </label>
+                                <label class="secondary-headings">End
+                                    <input type="time" @bind="editingEnd" />
+                                </label>
+                            </div>
+                            <input type="text" class="text-input entry-edit-label" maxlength="50"
+                                   placeholder="Job (optional)" @bind="editingLabel" @bind:event="oninput" />
+                        </div>
+                    </li>
+                }
+                else
+                {
+                    <li>
+                        <div class="entry-left">
+                            <span class="entry-date">@entry.Date.ToString("dddd, dd MMM yyyy")</span>
+                            @if (entry.StartTime.HasValue && entry.EndTime.HasValue)
+                            {
+                                <span class="entry-time-range">@entry.StartTime.Value.ToString("HH:mm") – @entry.EndTime.Value.ToString("HH:mm")</span>
+                            }
+                            @if (!string.IsNullOrWhiteSpace(entry.Label))
+                            {
+                                <span class="entry-label">@entry.Label</span>
+                            }
+                        </div>
+                        <div class="entry-actions">
+                            <span class="entry-hours">@entry.HoursWorked.ToString("0.##") hrs</span>
+                            <button class="btn-icon" title="Edit" @onclick="() => StartEdit(entry)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M12.854.146a.5.5 0 0 0-.707 0L10.5 1.793 14.207 5.5l1.647-1.646a.5.5 0 0 0 0-.708l-3-3zm.646 6.061L9.793 2.5 3.293 9H3.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.207l6.5-6.5zm-7.468 7.468A.5.5 0 0 1 6 13.5V13h-.5a.5.5 0 0 1-.5-.5V12h-.5a.5.5 0 0 1-.5-.5V11h-.5a.5.5 0 0 1-.5-.5V10h-.5a.499.499 0 0 1-.175-.032l-.179.178a.5.5 0 0 0-.11.168l-2 5a.5.5 0 0 0 .65.65l5-2a.5.5 0 0 0 .168-.11l.178-.178z"/>
                                 </svg>
                             </button>
-                            <button class="btn-icon danger" title="Delete" @onclick="() => DeleteEntry(entry.Key)">
+                            <button class="btn-icon danger" title="Delete" @onclick="() => DeleteEntry(entry.Id)">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="currentColor" viewBox="0 0 16 16">
                                     <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
                                     <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
                                 </svg>
                             </button>
-                        }
-                    </div>
-                </li>
+                        </div>
+                    </li>
+                }
             }
         </ul>
     </div>
@@ -302,7 +337,7 @@
 
 @code {
     // Earnings state
-    private Dictionary<DateOnly, double> hoursLogged = new();
+    private List<HoursEntry> hoursLogged = new();
     private double grossEarnings;
     private double totalExpenses;
     private double taxableProfit;
@@ -323,6 +358,7 @@
     private DateTime selectedDate = DateTime.Today;
     private TimeOnly shiftStart = new TimeOnly(9, 0);
     private TimeOnly shiftEnd = TimeOnly.FromDateTime(DateTime.Now);
+    private string jobLabel = string.Empty;
 
     // Expense form
     private List<Expense> expensesLogged = new();
@@ -331,8 +367,11 @@
     private int expenseCategory = (int)ExpenseCategory.Materials;
     private string expenseDescription = string.Empty;
 
-    private DateOnly? editingDate = null;
-    private double editingHours = 0;
+    // Inline edit state (keyed by entry Id)
+    private int? editingId = null;
+    private TimeOnly editingStart;
+    private TimeOnly editingEnd;
+    private string editingLabel = string.Empty;
 
     private int periodOffset = 0;
     private DateOnly periodStart;
@@ -357,7 +396,6 @@
                 ? $"{start.Day}–{end.Day} {start:MMM yyyy}"
                 : $"{start.Day} {start:MMM} – {end.Day} {end:MMM yyyy}";
         }
-        // Monthly: if period starts on the 1st, "June 2026" is cleaner than "1 Jun – 30 Jun 2026"
         return settings.PayPeriodStartDay == 1
             ? start.ToString("MMMM yyyy")
             : $"{start.Day} {start:MMM} – {end.Day} {end:MMM yyyy}";
@@ -373,7 +411,7 @@
         currentSettings = await TrackerService.GetSettingsAsync();
         (periodStart, periodEnd) = HoursTrackerService.GetPayPeriodBounds(currentSettings, periodOffset);
 
-        hoursLogged = await TrackerService.GetHoursLoggedAsync();
+        hoursLogged = await TrackerService.GetEntriesAsync();
         var summary = await TrackerService.GetPeriodEarningsSummaryAsync(periodStart, periodEnd);
         grossEarnings = summary.GrossEarnings;
         totalExpenses = summary.TotalExpenses;
@@ -428,7 +466,6 @@
         if (e.ChangedTouches.Length == 0) return;
         var dx = _swipeStartX - e.ChangedTouches[0].ClientX;
         var dy = _swipeStartY - e.ChangedTouches[0].ClientY;
-        // Only fire if horizontal movement is dominant and exceeds 48px
         if (Math.Abs(dx) > 48 && Math.Abs(dx) > Math.Abs(dy))
         {
             if (dx > 0) await NextPeriod();
@@ -449,38 +486,52 @@
         await RefreshAsync();
     }
 
-    // ── Mutating actions (all trigger a light haptic tap) ─────────────────────
+    // ── Mutating actions ──────────────────────────────────────────────────────
     public async Task AddHours()
     {
-        Haptic(HapticFeedbackType.Click);
         double hours = (shiftEnd - shiftStart).TotalHours;
-        await TrackerService.LogHoursAsync(DateOnly.FromDateTime(selectedDate), hours);
+        if (hours <= 0) return;
+        Haptic(HapticFeedbackType.Click);
+        await TrackerService.AddEntryAsync(new HoursEntry
+        {
+            Date       = DateOnly.FromDateTime(selectedDate),
+            HoursWorked = hours,
+            StartTime  = shiftStart,
+            EndTime    = shiftEnd,
+            Label      = jobLabel.Trim()
+        });
+        jobLabel = string.Empty;
         await RefreshAsync();
     }
 
-    private void StartEdit(DateOnly date, double currentHours)
+    private void StartEdit(HoursEntry entry)
     {
-        editingDate = date;
-        editingHours = currentHours;
+        editingId    = entry.Id;
+        editingStart = entry.StartTime ?? new TimeOnly(9, 0);
+        editingEnd   = entry.EndTime   ?? new TimeOnly(17, 0);
+        editingLabel = entry.Label;
     }
 
-    private void CancelEdit() => editingDate = null;
+    private void CancelEdit() => editingId = null;
 
     private async Task SaveEdit()
     {
-        if (editingDate is not null)
-        {
-            Haptic(HapticFeedbackType.Click);
-            await TrackerService.LogHoursAsync(editingDate.Value, editingHours);
-            editingDate = null;
-            await RefreshAsync();
-        }
+        if (editingId is null) return;
+        Haptic(HapticFeedbackType.Click);
+        var entry = hoursLogged.First(e => e.Id == editingId.Value);
+        entry.StartTime   = editingStart;
+        entry.EndTime     = editingEnd;
+        entry.HoursWorked = (editingEnd - editingStart).TotalHours;
+        entry.Label       = editingLabel.Trim();
+        await TrackerService.UpdateEntryAsync(entry);
+        editingId = null;
+        await RefreshAsync();
     }
 
-    private async Task DeleteEntry(DateOnly date)
+    private async Task DeleteEntry(int id)
     {
         Haptic(HapticFeedbackType.LongPress);
-        await TrackerService.DeleteHoursAsync(date);
+        await TrackerService.DeleteEntryAsync(id);
         await RefreshAsync();
     }
 

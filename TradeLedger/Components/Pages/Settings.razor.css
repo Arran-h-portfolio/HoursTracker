@@ -296,6 +296,44 @@ select {
     color: var(--color-text);
 }
 
+/* ── Working day chips ── */
+.working-days-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.day-chips {
+    display: flex;
+    gap: 6px;
+}
+
+.day-chip {
+    flex: 1;
+    height: 36px;
+    border-radius: 8px;
+    border: 1.5px solid var(--color-border);
+    background: none;
+    color: var(--color-muted);
+    font-size: 0.7rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    padding: 0;
+}
+
+.day-chip.active {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    color: #FFFFFF;
+}
+
+.day-chip:not(.active):hover {
+    border-color: var(--color-brand);
+    color: var(--color-brand);
+}
+
 /* ── UK tax rate display ── */
 .uk-tax-info {
     width: 100%;

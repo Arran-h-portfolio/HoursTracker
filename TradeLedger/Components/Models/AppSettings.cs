@@ -30,4 +30,7 @@ public class AppSettings
 
     // Premium: net earnings target for the current pay period (0 = disabled)
     public double EarningsGoal { get; set; } = 0;
+
+    // Bitmask of selected working days: bit = (int)DayOfWeek, default Mon–Fri = 62
+    public int WorkingDays { get; set; } = 62;
 }

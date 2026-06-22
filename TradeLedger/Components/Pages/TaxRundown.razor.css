@@ -14,7 +14,13 @@
     padding: 20px 24px;
     border-radius: 12px;
     margin-bottom: 16px;
+    animation: card-enter 0.35s ease both;
 }
+
+.main-background:nth-child(1) { animation-delay: 0.00s; }
+.main-background:nth-child(2) { animation-delay: 0.05s; }
+.main-background:nth-child(3) { animation-delay: 0.10s; }
+.main-background:nth-child(4) { animation-delay: 0.15s; }
 
 .secondary-headings {
     color: var(--color-muted);
@@ -170,7 +176,17 @@ input[type="date"]:focus {
     display: flex;
     flex-direction: column;
     gap: 3px;
+    animation: card-enter 0.3s ease both;
 }
+
+.tax-summary-block:nth-child(1) { animation-delay: 0.08s; }
+.tax-summary-block:nth-child(2) { animation-delay: 0.13s; }
+.tax-summary-block:nth-child(3) { animation-delay: 0.18s; }
+.tax-summary-block:nth-child(4) { animation-delay: 0.23s; }
+.tax-summary-block:nth-child(5) { animation-delay: 0.28s; }
+.tax-summary-block:nth-child(6) { animation-delay: 0.33s; }
+.tax-summary-block:nth-child(7) { animation-delay: 0.38s; }
+.tax-summary-block:nth-child(8) { animation-delay: 0.43s; }
 
 .tax-summary-block.highlight-tax {
     background-color: rgba(239, 68, 68, 0.06);
@@ -233,6 +249,7 @@ input[type="date"]:focus {
     font-size: 0.82rem;
     color: var(--color-text);
     align-items: center;
+    animation: fade-in 0.25s ease both;
 }
 
 .breakdown-row.empty-row {

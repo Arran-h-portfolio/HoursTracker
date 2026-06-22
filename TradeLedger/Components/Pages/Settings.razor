@@ -114,6 +114,17 @@
             </div>
             @if (notificationsEnabled)
             {
+                <div class="working-days-group">
+                    <span class="notif-label">Working days</span>
+                    <div class="day-chips">
+                        @foreach (var (dayLabel, dow) in Days)
+                        {
+                            var active = IsDaySelected(dow);
+                            <button class="day-chip @(active ? "active" : "")"
+                                    @onclick="() => ToggleDay(dow)">@dayLabel</button>
+                        }
+                    </div>
+                </div>
                 <div class="notif-time-row">
                     <label class="secondary-headings" style="text-transform:none;letter-spacing:normal;font-size:0.875rem;color:var(--color-text);">
                         Reminder time
@@ -194,6 +205,17 @@
 </body>
 
 @code {
+    private static readonly (string Label, DayOfWeek Day)[] Days =
+    [
+        ("Mo", DayOfWeek.Monday),
+        ("Tu", DayOfWeek.Tuesday),
+        ("We", DayOfWeek.Wednesday),
+        ("Th", DayOfWeek.Thursday),
+        ("Fr", DayOfWeek.Friday),
+        ("Sa", DayOfWeek.Saturday),
+        ("Su", DayOfWeek.Sunday),
+    ];
+
     private double taxRatePercent;
     private double hourlyWage;
     private PayPeriodType payPeriodType;
@@ -205,6 +227,7 @@
     private bool notificationsEnabled;
     private int notificationHour   = 18;
     private int notificationMinute = 0;
+    private int workingDays        = 62;
 
     protected override async Task OnInitializedAsync()
     {
@@ -220,6 +243,15 @@
         notificationsEnabled = settings.NotificationsEnabled;
         notificationHour     = settings.NotificationHour;
         notificationMinute   = settings.NotificationMinute;
+        workingDays          = settings.WorkingDays;
+    }
+
+    private bool IsDaySelected(DayOfWeek day) => (workingDays & (1 << (int)day)) != 0;
+
+    private void ToggleDay(DayOfWeek day)
+    {
+        if (IsDaySelected(day)) workingDays &= ~(1 << (int)day);
+        else                     workingDays |=  (1 << (int)day);
     }
 
     private async Task SaveSettings()
@@ -265,11 +297,12 @@
     private async Task SaveNotification()
     {
         var settings = await TrackerService.GetSettingsAsync();
-        settings.NotificationHour   = notificationHour;
-        settings.NotificationMinute = notificationMinute;
+        settings.NotificationHour     = notificationHour;
+        settings.NotificationMinute   = notificationMinute;
         settings.NotificationsEnabled = true;
+        settings.WorkingDays          = workingDays;
         await TrackerService.SaveSettingsAsync(settings);
-        await NotifService.ScheduleDailyReminderAsync(notificationHour, notificationMinute);
+        await NotifService.ScheduleWorkingDayRemindersAsync(notificationHour, notificationMinute, workingDays);
     }
 
     private async Task TogglePremium()

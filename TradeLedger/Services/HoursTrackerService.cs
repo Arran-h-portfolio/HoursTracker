@@ -54,27 +54,33 @@ public class HoursTrackerService(IDbContextFactory<AppDbContext> dbFactory)
 
     // ── Hours ────────────────────────────────────────────────────────────────
 
-    public async Task<Dictionary<DateOnly, double>> GetHoursLoggedAsync()
+    public async Task<List<HoursEntry>> GetEntriesAsync()
     {
         using var db = await dbFactory.CreateDbContextAsync();
-        return await db.HoursEntries.ToDictionaryAsync(h => h.Date, h => h.HoursWorked);
+        return await db.HoursEntries
+            .OrderByDescending(h => h.Date)
+            .ThenBy(h => h.StartTime)
+            .ToListAsync();
     }
 
-    public async Task LogHoursAsync(DateOnly date, double hours)
+    public async Task AddEntryAsync(HoursEntry entry)
     {
         using var db = await dbFactory.CreateDbContextAsync();
-        var existing = await db.HoursEntries.FirstOrDefaultAsync(h => h.Date == date);
-        if (existing is null)
-            db.HoursEntries.Add(new HoursEntry { Date = date, HoursWorked = hours });
-        else
-            existing.HoursWorked = hours;
+        db.HoursEntries.Add(entry);
         await db.SaveChangesAsync();
     }
 
-    public async Task DeleteHoursAsync(DateOnly date)
+    public async Task UpdateEntryAsync(HoursEntry entry)
     {
         using var db = await dbFactory.CreateDbContextAsync();
-        var entry = await db.HoursEntries.FirstOrDefaultAsync(h => h.Date == date);
+        db.HoursEntries.Update(entry);
+        await db.SaveChangesAsync();
+    }
+
+    public async Task DeleteEntryAsync(int id)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+        var entry = await db.HoursEntries.FindAsync(id);
         if (entry is not null)
         {
             db.HoursEntries.Remove(entry);
@@ -304,13 +310,15 @@ public class HoursTrackerService(IDbContextFactory<AppDbContext> dbFactory)
         var sb = new System.Text.StringBuilder();
 
         sb.AppendLine("HOURS WORKED");
-        sb.AppendLine("Date,Hours,Gross (GBP),Tax (GBP),Net (GBP)");
+        sb.AppendLine("Date,Start,End,Hours,Job,Gross (GBP),Tax (GBP),Net (GBP)");
         foreach (var entry in entries)
         {
             var gross  = entry.HoursWorked * settings.HourlyWage;
             var tax    = gross * settings.TaxRate;
             var net    = gross - tax;
-            sb.AppendLine($"{entry.Date:yyyy-MM-dd},{entry.HoursWorked:0.##},{gross:0.00},{tax:0.00},{net:0.00}");
+            var start  = entry.StartTime.HasValue ? entry.StartTime.Value.ToString("HH:mm") : "";
+            var end    = entry.EndTime.HasValue ? entry.EndTime.Value.ToString("HH:mm") : "";
+            sb.AppendLine($"{entry.Date:yyyy-MM-dd},{start},{end},{entry.HoursWorked:0.##},{entry.Label},{gross:0.00},{tax:0.00},{net:0.00}");
         }
 
         sb.AppendLine();

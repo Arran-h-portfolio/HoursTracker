@@ -430,6 +430,63 @@ select:focus {
 /* ── Recent periods — expenses line ── */
 .history-stat.expenses { color: var(--color-danger); }
 
+/* ── Shift log entry — left info column ── */
+.entry-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.entry-time-range {
+    font-size: 0.75rem;
+    color: var(--color-muted);
+}
+
+.entry-label {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--color-text);
+}
+
+/* ── Inline edit form (expanded row) ── */
+.log-list li.editing {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 0;
+}
+
+.entry-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+}
+
+.entry-edit-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.entry-edit-row {
+    display: flex;
+    gap: 12px;
+}
+
+.entry-edit-row label {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+}
+
+.entry-edit-label {
+    margin-top: 0;
+    padding: 6px 10px;
+    font-size: 0.875rem;
+}
+
 .entry-actions {
     display: flex;
     align-items: center;

@@ -59,6 +59,15 @@ public static class MauiProgram
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN NotificationMinute INTEGER NOT NULL DEFAULT 0"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN UseUKTax INTEGER NOT NULL DEFAULT 0"); } catch { }
 			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN EarningsGoal REAL NOT NULL DEFAULT 0"); } catch { }
+
+			// Allow multiple entries per day (e.g. tradespeople logging separate jobs)
+			try { db.Database.ExecuteSqlRaw("DROP INDEX IF EXISTS IX_HoursEntries_Date"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE HoursEntries ADD COLUMN StartTime TEXT"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE HoursEntries ADD COLUMN EndTime TEXT"); } catch { }
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE HoursEntries ADD COLUMN Label TEXT NOT NULL DEFAULT ''"); } catch { }
+
+			// Working days bitmask for reminder scheduling (default 62 = Mon–Fri)
+			try { db.Database.ExecuteSqlRaw("ALTER TABLE Settings ADD COLUMN WorkingDays INTEGER NOT NULL DEFAULT 62"); } catch { }
 		}
 
 		return app;

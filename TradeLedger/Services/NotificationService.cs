@@ -1,46 +1,62 @@
 using Plugin.LocalNotification;
-using Plugin.LocalNotification.EventArgs;
 
 namespace TradeLedger.Services;
 
 public class NotificationService
 {
-    private const int DailyReminderId = 1001;
+    // One slot per day-of-week: IDs 1001 (Sun) through 1007 (Sat)
+    private const int ReminderBaseId = 1001;
 
     public async Task<bool> RequestPermissionAsync()
     {
         return await LocalNotificationCenter.Current.RequestNotificationPermission();
     }
 
-    public async Task ScheduleDailyReminderAsync(int hour, int minute)
+    // Schedules a weekly notification for each day set in workingDaysBitmask.
+    // Bit position matches (int)DayOfWeek: bit 0 = Sunday … bit 6 = Saturday.
+    public async Task ScheduleWorkingDayRemindersAsync(int hour, int minute, int workingDaysBitmask)
     {
         await LocalNotificationCenter.Current.RequestNotificationPermission();
 
-        // Cancel any existing reminder before re-scheduling
-        LocalNotificationCenter.Current.Cancel(DailyReminderId);
+        // Cancel all seven slots before rescheduling
+        for (int d = 0; d < 7; d++)
+            LocalNotificationCenter.Current.Cancel(ReminderBaseId + d);
 
-        var notifyTime = DateTime.Today.AddHours(hour).AddMinutes(minute);
-        if (notifyTime <= DateTime.Now)
-            notifyTime = notifyTime.AddDays(1);
+        var today = DateTime.Today;
 
-        var request = new NotificationRequest
+        for (int d = 0; d < 7; d++)
         {
-            NotificationId = DailyReminderId,
-            Title = "TradeLedger",
-            Description = "Don't forget to log your hours today!",
-            BadgeNumber = 1,
-            Schedule = new NotificationRequestSchedule
-            {
-                NotifyTime = notifyTime,
-                RepeatType = NotificationRepeat.Daily
-            }
-        };
+            if ((workingDaysBitmask & (1 << d)) == 0) continue;
 
-        await LocalNotificationCenter.Current.Show(request);
+            var targetDow  = (DayOfWeek)d;
+            int daysUntil  = ((int)targetDow - (int)today.DayOfWeek + 7) % 7;
+
+            // If target is today but the time has already passed, push to next week
+            if (daysUntil == 0 && today.AddHours(hour).AddMinutes(minute) <= DateTime.Now)
+                daysUntil = 7;
+
+            var notifyTime = today.AddDays(daysUntil).AddHours(hour).AddMinutes(minute);
+
+            var request = new NotificationRequest
+            {
+                NotificationId = ReminderBaseId + d,
+                Title          = "TradeLedger",
+                Description    = "Don't forget to log your hours today!",
+                BadgeNumber    = 1,
+                Schedule       = new NotificationRequestSchedule
+                {
+                    NotifyTime = notifyTime,
+                    RepeatType = NotificationRepeat.Weekly
+                }
+            };
+
+            await LocalNotificationCenter.Current.Show(request);
+        }
     }
 
     public void CancelDailyReminder()
     {
-        LocalNotificationCenter.Current.Cancel(DailyReminderId);
+        for (int d = 0; d < 7; d++)
+            LocalNotificationCenter.Current.Cancel(ReminderBaseId + d);
     }
 }
