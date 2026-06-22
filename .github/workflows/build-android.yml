@@ -1,0 +1,51 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Install MAUI Android workload
+        run: dotnet workload install maui-android
+
+      - name: Build Android APK
+        run: dotnet publish TradeLedger/TradeLedger.csproj -f net10.0-android -c Release
+
+      - name: Locate APK
+        id: apk
+        run: |
+          APK_PATH=$(find TradeLedger/bin/Release/net10.0-android -name "*.apk" | head -1)
+          echo "path=$APK_PATH" >> $GITHUB_OUTPUT
+          echo "Found: $APK_PATH"
+
+      - name: Publish to GitHub Releases
+        uses: ncipollo/release-action@v1
+        with:
+          tag: latest
+          name: "TradeLedger — Latest Build"
+          body: |
+            Latest Android APK — built automatically from main.
+
+            **To install:**
+            1. Download the `.apk` file below
+            2. Open it on your Android phone
+            3. If prompted, enable "Install from unknown sources" in Settings
+            4. Tap Install
+          prerelease: true
+          allowUpdates: true
+          replacesArtifacts: true
+          artifacts: ${{ steps.apk.outputs.path }}
+          token: ${{ secrets.GITHUB_TOKEN }}
