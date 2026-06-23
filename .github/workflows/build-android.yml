@@ -5,6 +5,9 @@ on:
     branches: [main]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -28,24 +31,26 @@ jobs:
         id: apk
         run: |
           APK_PATH=$(find TradeLedger/bin/Release/net10.0-android -name "*.apk" | head -1)
+          if [ -z "$APK_PATH" ]; then
+            echo "ERROR: No APK found. Listing bin output:"
+            find TradeLedger/bin -type f | sort
+            exit 1
+          fi
           echo "path=$APK_PATH" >> $GITHUB_OUTPUT
-          echo "Found: $APK_PATH"
+          echo "Found APK: $APK_PATH"
 
       - name: Publish to GitHub Releases
-        uses: ncipollo/release-action@v1
-        with:
-          tag: latest
-          name: "TradeLedger — Latest Build"
-          body: |
-            Latest Android APK — built automatically from main.
+        run: |
+          gh release delete latest --yes 2>/dev/null || true
+          gh release create latest "${{ steps.apk.outputs.path }}" \
+            --title "TradeLedger — Latest Build" \
+            --notes "Latest Android APK built automatically from main.
 
-            **To install:**
-            1. Download the `.apk` file below
-            2. Open it on your Android phone
-            3. If prompted, enable "Install from unknown sources" in Settings
-            4. Tap Install
-          prerelease: true
-          allowUpdates: true
-          replacesArtifacts: true
-          artifacts: ${{ steps.apk.outputs.path }}
-          token: ${{ secrets.GITHUB_TOKEN }}
+          **To install:**
+          1. Download the \`.apk\` file below
+          2. Open it on your Android phone
+          3. If prompted, enable 'Install from unknown sources' in Settings
+          4. Tap Install" \
+            --prerelease
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
