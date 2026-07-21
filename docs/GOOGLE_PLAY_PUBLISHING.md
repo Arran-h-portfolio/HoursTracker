@@ -443,6 +443,11 @@ if (settings.IsPremium != isActive)
 
 This means if someone cancels their subscription, the premium features are automatically removed on next app launch.
 
+> **Note:** this check only ever looks at receipts on the current device, so it can't
+> recognise a purchase made on a different device or after a reinstall. Adding accounts
+> and a server-side subscription record (Supabase) closes that gap without changing the
+> purchase flow above — see `docs/CLOUD_ACCOUNTS_AND_SYNC.md`.
+
 ---
 
 ## Step 11 — Upload and Submit

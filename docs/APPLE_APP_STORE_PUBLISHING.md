@@ -412,6 +412,12 @@ Confirm your Settings.razor has both buttons:
 <button class="btn-secondary" @onclick="RestorePurchases">Restore Purchases</button>
 ```
 
+> **Note:** `CheckPremiumStatusAsync()` (Google Play guide, "Check subscription status on
+> app launch") only looks at receipts on the current device — it won't recognise a
+> purchase made on a different device or Apple ID after a reinstall. Adding accounts and
+> a server-side subscription record (Supabase) closes that gap without changing the
+> purchase flow above — see `docs/CLOUD_ACCOUNTS_AND_SYNC.md`.
+
 ### Test purchases without being charged
 
 Before submitting, create a **Sandbox Tester account** in App Store Connect:

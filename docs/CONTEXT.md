@@ -12,13 +12,17 @@ The core promise: log your hours and expenses, and TradeLedger tells you your tr
 
 **Mobile only — Android and iOS.**
 
-Built with .NET MAUI Blazor (C#), targeting Android and iPhone iOS. The UI is a Blazor WebView hosted inside MAUI, using SQLite (via EF Core) for all local data persistence. There is no cloud backend or server component at this stage — all data lives on the device.
+Built with .NET MAUI Blazor (C#), targeting Android and iPhone iOS. The UI is a Blazor WebView hosted inside MAUI, using SQLite (via EF Core) as the primary local store — the app is fully usable offline. An optional account (via Supabase) syncs the same data to a Postgres backend so it's available on any device the user signs into; signing in is not required to use the app. See [`docs/CLOUD_ACCOUNTS_AND_SYNC.md`](./CLOUD_ACCOUNTS_AND_SYNC.md) for the full design.
 
 ---
 
 ## Business Model
 
-SaaS subscription model. The app is free to download with access to Standard features. Premium features require an active subscription purchased through the Google Play Store or Apple App Store (in-app purchase). The subscription toggle is currently a manual flag (`IsPremium` in Settings) as a placeholder until real store billing is wired up.
+SaaS subscription model. The app is free to download with access to Standard features. Premium features require an active subscription purchased through the Google Play Store or Apple App Store (in-app purchase) — **not** Stripe or any other payment processor, because Apple requires native In-App Purchase for digital subscriptions consumed in-app (Guideline 3.1.1) and mixing processors risks rejection. Both stores' billing systems are wired the same way via `Plugin.InAppBilling` (see `docs/GOOGLE_PLAY_PUBLISHING.md` and `docs/APPLE_APP_STORE_PUBLISHING.md`). The subscription toggle is currently a manual flag (`IsPremium` in Settings) as a placeholder until real store billing is wired up.
+
+**Pricing (recommended):** £4.99/month or £39.99/year (~33% off, standard annual-discount anchor). Comparable UK self-employed tracking apps price higher — Everlance ~£6.99/mo, Hurdlr ~£8/mo equivalent, QuickBooks Self-Employed ~£8–15/mo — but those bundle mileage tracking, invoicing, or tax filing that TradeLedger doesn't do, so pricing slightly under them fits a single-purpose tool. A 7-day free trial on the subscription product is recommended to lower purchase friction; both price and trial length are configured entirely in Play Console / App Store Connect, no app code required.
+
+Because a purchase is tied to the store account on the device that made it, a **server-side subscription record** (Supabase) is needed so premium status is known correctly if the user signs into a second device or reinstalls — see [`docs/CLOUD_ACCOUNTS_AND_SYNC.md`](./CLOUD_ACCOUNTS_AND_SYNC.md).
 
 ---
 
@@ -26,10 +30,12 @@ SaaS subscription model. The app is free to download with access to Standard fea
 
 - **Framework:** .NET MAUI Blazor (C#), .NET 10
 - **UI:** Blazor WebView, component-scoped CSS, CSS custom properties for theming
-- **Database:** SQLite via EF Core (`AppDbContext`), schema managed with `EnsureCreated` + manual `ALTER TABLE / CREATE TABLE IF NOT EXISTS` migrations on startup in `MauiProgram.cs`
+- **Local database:** SQLite via EF Core (`AppDbContext`), schema managed with `EnsureCreated` + manual `ALTER TABLE / CREATE TABLE IF NOT EXISTS` migrations on startup in `MauiProgram.cs` — remains the primary store, app is fully usable offline
+- **Cloud backend (planned):** Supabase — Postgres (mirrors the local schema, row-level security scoped per user), Supabase Auth (email/password login for cross-device sync), Edge Functions (server-side receipt validation for Google Play / Apple subscriptions). Chosen over Azure to avoid running two overlapping backends — Supabase covers auth, database, and serverless functions in one project. See [`docs/CLOUD_ACCOUNTS_AND_SYNC.md`](./CLOUD_ACCOUNTS_AND_SYNC.md).
+- **Billing:** Google Play Billing (Android) / StoreKit (iOS) via `Plugin.InAppBilling` — native store billing only, not Stripe (see Business Model)
 - **Notifications:** Plugin.LocalNotification (daily reminder scheduling)
 - **Export:** MAUI Share API (CSV file via native share sheet)
-- **Key services:** `HoursTrackerService` — the single point of contact with the database; pages never call EF Core directly
+- **Key services:** `HoursTrackerService` — the single point of contact with the local database; pages never call EF Core directly
 
 ---
 
@@ -84,6 +90,8 @@ All standard features are included. The following are locked behind a subscripti
 | `HoursEntries` | `Date` (unique), `HoursWorked` |
 | `Expenses` | `Date`, `Amount`, `Category` (enum: Materials/Travel/Equipment/Other), `Description` |
 
+This is the local SQLite schema and remains authoritative when the user is offline or not signed in. Once accounts/sync are implemented (see [`docs/CLOUD_ACCOUNTS_AND_SYNC.md`](./CLOUD_ACCOUNTS_AND_SYNC.md)), each table gains `UserId`, `RemoteId`, `UpdatedAt`, and `IsDeleted` columns and is mirrored into Supabase Postgres, row-scoped per user via Row Level Security.
+
 ### Earnings formula
 
 All financial figures are derived at read time — nothing is stored — so they can never go stale:
@@ -117,8 +125,12 @@ Class 2 NI abolished April 2024 — not included. Personal allowance taper above
 | `/` | Home — shift logging, earnings card, expense logging, period goal, daily log, period history | Free |
 | `/dashboard` | Dashboard — yearly chart, breakdown table, insights, CSV export | Premium |
 | `/tax-rundown` | Tax Rundown — custom date range tax breakdown | Premium |
-| `/settings` | Settings — wage, tax mode, pay period, earnings goal, appearance, notifications, subscription | Free |
+| `/settings` | Settings — wage, tax mode, pay period, earnings goal, appearance, notifications, subscription, account | Free |
 | `/onboarding` | Onboarding wizard — first-run setup, no tab bar | Free |
+| `/login` *(planned)* | Sign in with email/password (Supabase Auth), no tab bar | Free — optional |
+| `/signup` *(planned)* | Create an account, no tab bar | Free — optional |
+
+Signing in is optional — the app is fully usable with local-only storage. An account only unlocks cross-device sync and lets a premium subscription be recognised on a second device. See [`docs/CLOUD_ACCOUNTS_AND_SYNC.md`](./CLOUD_ACCOUNTS_AND_SYNC.md).
 
 **Bottom tab bar** (fixed, replaces original sidebar) — four tabs: Home / Dashboard / Tax / Settings. Inline SVG icons coloured with `currentColor`; active tab shows brand indigo with a pill indicator at the top edge and a subtle icon scale-up. Respects iOS `env(safe-area-inset-bottom)`. Tab bar CSS lives in global `app.css` (not scoped) because `NavLink` is a child component and Blazor CSS isolation does not apply scope attributes to child component output.
 
@@ -168,11 +180,13 @@ Class 2 NI abolished April 2024 — not included. Personal allowance taper above
 | `Platforms/Android/MainActivity.cs` | Passes `null` to `base.OnCreate` to prevent stale fragment state crash |
 | `docs/GOOGLE_PLAY_PUBLISHING.md` | Full Play Store publishing guide including billing wiring |
 | `docs/APPLE_APP_STORE_PUBLISHING.md` | Full App Store publishing guide including StoreKit wiring |
+| `docs/CLOUD_ACCOUNTS_AND_SYNC.md` | Supabase auth, offline-first sync design, server-side subscription validation, pricing recommendation |
 
 ---
 
 ## What Is Not Yet Built (Planned Next Steps)
 
 1. **Real in-app purchase billing** — replace the manual `IsPremium` toggle with Google Play Billing and Apple StoreKit. Tutorial docs are already written and ready in `docs/`.
-2. **Cloud backup / sync** — local-only storage means data is lost if the device is replaced; iCloud or Google Drive backup would significantly increase user trust and retention.
-3. **UK tax personal allowance taper above £100k** — the £100k–£125,140 taper (effective 60% rate) is not yet modelled; low priority for v1.
+2. **Accounts and cloud sync** — email/password login (Supabase Auth), `/login` and `/signup` pages, and an offline-first sync layer so data survives a device change and is available on any device the user signs into. Design is written up in `docs/CLOUD_ACCOUNTS_AND_SYNC.md`.
+3. **Server-side subscription validation** — verify Google Play / Apple purchases server-side (Supabase Edge Function) and store entitlement on the user's account, so premium status is correct on a second device, not just the device that purchased. Also written up in `docs/CLOUD_ACCOUNTS_AND_SYNC.md`.
+4. **UK tax personal allowance taper above £100k** — the £100k–£125,140 taper (effective 60% rate) is not yet modelled; low priority for v1.

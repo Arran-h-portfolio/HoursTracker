@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="456" height="456" viewBox="0 0 456 456" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- White badge circle — pops against indigo gradient background -->
+  <circle cx="228" cy="228" r="150" fill="white"/>
+
+  <!-- Subtle inner ring for depth -->
+  <circle cx="228" cy="228" r="150" fill="none" stroke="#E0E7FF" stroke-width="6"/>
+
+  <!--
+    £ symbol: three strokes in brand indigo on the white face.
+      1. Curved stem  — rises left-of-centre, hooks right at top
+      2. Middle crossbar
+      3. Bottom bar (wider than crossbar)
+    Artwork kept within the Android adaptive icon safe zone (~66% of canvas).
+  -->
+
+  <!-- 1. Curved stem -->
+  <path d="M 208 292 L 208 206 Q 208 164 228 164 Q 250 164 254 186"
+        stroke="#4F46E5" stroke-width="22" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+
+  <!-- 2. Middle crossbar -->
+  <line x1="184" y1="238" x2="276" y2="238"
+        stroke="#4F46E5" stroke-width="22" stroke-linecap="round"/>
+
+  <!-- 3. Bottom bar -->
+  <line x1="174" y1="292" x2="294" y2="292"
+        stroke="#4F46E5" stroke-width="22" stroke-linecap="round"/>
+
+</svg>
