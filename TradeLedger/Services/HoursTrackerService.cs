@@ -88,6 +88,38 @@ public class HoursTrackerService(IDbContextFactory<AppDbContext> dbFactory)
         }
     }
 
+    public async Task<List<HoursEntry>> GetEntriesInRangeAsync(DateOnly from, DateOnly to)
+    {
+        using var db = await dbFactory.CreateDbContextAsync();
+        return await db.HoursEntries
+            .Where(h => h.Date >= from && h.Date <= to)
+            .ToListAsync();
+    }
+
+    // Scheduled working days (per the WorkingDays bitmask) within [from, to] that have no
+    // logged hours entry yet. Used to warn the user they forgot to log a working day.
+    public async Task<List<DateOnly>> GetMissedWorkingDaysAsync(int workingDaysBitmask, DateOnly from, DateOnly to)
+    {
+        if (to < from) return [];
+
+        using var db = await dbFactory.CreateDbContextAsync();
+        var loggedDates = (await db.HoursEntries
+            .Where(h => h.Date >= from && h.Date <= to)
+            .Select(h => h.Date)
+            .Distinct()
+            .ToListAsync())
+            .ToHashSet();
+
+        var missed = new List<DateOnly>();
+        for (var d = from; d <= to; d = d.AddDays(1))
+        {
+            if ((workingDaysBitmask & (1 << (int)d.DayOfWeek)) == 0) continue;
+            if (loggedDates.Contains(d)) continue;
+            missed.Add(d);
+        }
+        return missed;
+    }
+
     // ── Expenses ─────────────────────────────────────────────────────────────
 
     public async Task LogExpenseAsync(Expense expense)

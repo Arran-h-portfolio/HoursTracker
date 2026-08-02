@@ -2,8 +2,46 @@
 @using Data.Models
 @using TradeLedger.Services
 @inject HoursTrackerService TrackerService
+@inject NotificationService NotifService
 
-<h1 class="main-headings">Salary Tracker</h1>
+<div class="home-header">
+    <h1 class="main-headings">Salary Tracker</h1>
+    <button class="bell-button @(missedWorkingDays.Count > 0 ? "has-alert" : "")"
+            title="@(missedWorkingDays.Count > 0 ? $"{missedWorkingDays.Count} missed working day(s)" : "No missed working days")"
+            @onclick="() => showMissedPopover = !showMissedPopover">
+        <svg class="bell-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2ZM8 1.918l-.797.161A4.002 4.002 0 0 0 4 6c0 .628-.134 2.197-.42 3.672-.144.744-.32 1.49-.533 2.104-.213.617-.463 1.098-.728 1.398C2.093 13.398 2 13.676 2 14h12c0-.324-.093-.602-.319-.826-.265-.3-.515-.781-.728-1.398a13.44 13.44 0 0 1-.533-2.104C12.134 8.197 12 6.628 12 6a4.002 4.002 0 0 0-3.203-3.92L8 1.917Z"/>
+        </svg>
+        @if (missedWorkingDays.Count > 0)
+        {
+            <span class="bell-badge">@missedWorkingDays.Count</span>
+        }
+    </button>
+</div>
+
+@if (showMissedPopover)
+{
+    <section class="main-background missed-popover">
+        <h2 class="secondary-headings">Missed Working Days</h2>
+        @if (missedWorkingDays.Count == 0)
+        {
+            <p class="missed-days-empty">You're all caught up!</p>
+        }
+        else
+        {
+            <ul class="missed-days-list">
+                @foreach (var day in missedWorkingDays)
+                {
+                    <li>
+                        <span>@day.ToString("dddd, dd MMM")</span>
+                        <button class="missed-day-log-btn" @onclick="() => QuickLogDate(day)">Log now</button>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+}
+
 <body>
 @*Earnings card — shows stats for the selected pay period with navigation arrows*@
 <section class="main-background"
@@ -378,6 +416,10 @@
     private DateOnly periodEnd;
     private AppSettings currentSettings = new();
 
+    // Missed working days (bell badge)
+    private List<DateOnly> missedWorkingDays = new();
+    private bool showMissedPopover = false;
+
     private string PeriodLabel => FormatPeriodLabel(currentSettings, periodStart, periodEnd);
 
     private double goalPercent => currentSettings.EarningsGoal > 0
@@ -446,6 +488,20 @@
         var ytd   = await TrackerService.GetYearToDateSummaryAsync();
         ytdGross  = ytd.GrossEarnings;
         ytdProfit = ytd.TaxableProfit;
+
+        // Always reflects the *actual* current pay period (not whichever period is
+        // being browsed via the arrows) so the bell doesn't fluctuate while navigating.
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        var (currentPeriodStart, currentPeriodEnd) = HoursTrackerService.GetPayPeriodBounds(currentSettings, 0);
+        var missedRangeEnd = today < currentPeriodEnd ? today : currentPeriodEnd;
+        missedWorkingDays = await TrackerService.GetMissedWorkingDaysAsync(
+            currentSettings.WorkingDays, currentPeriodStart, missedRangeEnd);
+    }
+
+    private void QuickLogDate(DateOnly date)
+    {
+        selectedDate = date.ToDateTime(TimeOnly.MinValue);
+        showMissedPopover = false;
     }
 
     // ── Period swipe gesture ──────────────────────────────────────────────────
@@ -502,6 +558,7 @@
         });
         jobLabel = string.Empty;
         await RefreshAsync();
+        await NotifService.RescheduleAsync();
     }
 
     private void StartEdit(HoursEntry entry)
@@ -526,6 +583,7 @@
         await TrackerService.UpdateEntryAsync(entry);
         editingId = null;
         await RefreshAsync();
+        await NotifService.RescheduleAsync();
     }
 
     private async Task DeleteEntry(int id)
@@ -533,6 +591,7 @@
         Haptic(HapticFeedbackType.LongPress);
         await TrackerService.DeleteEntryAsync(id);
         await RefreshAsync();
+        await NotifService.RescheduleAsync();
     }
 
     private async Task AddExpense()

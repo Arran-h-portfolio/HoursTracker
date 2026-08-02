@@ -1,5 +1,6 @@
 @inherits LayoutComponentBase
 @inject TradeLedger.Services.HoursTrackerService TrackerService
+@inject TradeLedger.Services.NotificationService NotifService
 @inject NavigationManager Navigation
 @inject IJSRuntime JS
 
@@ -17,7 +18,14 @@
     {
         var settings = await TrackerService.GetSettingsAsync();
         if (!settings.IsOnboarded)
+        {
             Navigation.NavigateTo("/onboarding", forceLoad: false);
+            return;
+        }
+
+        // Keeps the reminder window topped up across cold starts (e.g. the app wasn't
+        // opened for a few days) and cancels any day that got logged elsewhere.
+        await NotifService.RescheduleAsync();
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

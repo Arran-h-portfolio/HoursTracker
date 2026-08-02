@@ -2,61 +2,70 @@ using Plugin.LocalNotification;
 
 namespace TradeLedger.Services;
 
-public class NotificationService
+public class NotificationService(HoursTrackerService trackerService)
 {
-    // One slot per day-of-week: IDs 1001 (Sun) through 1007 (Sat)
+    // One slot per date within the rolling window, keyed off DateOnly.DayNumber so
+    // each date maps to a stable, collision-free id while the window stays small.
     private const int ReminderBaseId = 1001;
+    private const int WindowDays = 14;
+
+    private static int IdForDate(DateOnly date) => ReminderBaseId + (date.DayNumber % 1000);
 
     public async Task<bool> RequestPermissionAsync()
     {
         return await LocalNotificationCenter.Current.RequestNotificationPermission();
     }
 
-    // Schedules a weekly notification for each day set in workingDaysBitmask.
-    // Bit position matches (int)DayOfWeek: bit 0 = Sunday … bit 6 = Saturday.
-    public async Task ScheduleWorkingDayRemindersAsync(int hour, int minute, int workingDaysBitmask)
+    // Recomputes the rolling reminder window from current settings + logged hours:
+    // a working day only gets a reminder if it doesn't already have hours logged and
+    // its reminder time hasn't already passed. Safe to call after any change that could
+    // affect either — new/edited/deleted entries, settings save, or app startup.
+    public async Task RescheduleAsync()
     {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+
+        // Clear a slightly wider range than the schedule window so leftovers from a
+        // previous, differently-shifted window don't linger.
+        for (int offset = -3; offset < WindowDays + 3; offset++)
+            LocalNotificationCenter.Current.Cancel(IdForDate(today.AddDays(offset)));
+
+        var settings = await trackerService.GetSettingsAsync();
+        if (!settings.NotificationsEnabled) return;
+
         await LocalNotificationCenter.Current.RequestNotificationPermission();
 
-        // Cancel all seven slots before rescheduling
-        for (int d = 0; d < 7; d++)
-            LocalNotificationCenter.Current.Cancel(ReminderBaseId + d);
+        var windowEnd = today.AddDays(WindowDays - 1);
+        var loggedDates = (await trackerService.GetEntriesInRangeAsync(today, windowEnd))
+            .Select(e => e.Date)
+            .ToHashSet();
 
-        var today = DateTime.Today;
-
-        for (int d = 0; d < 7; d++)
+        for (var date = today; date <= windowEnd; date = date.AddDays(1))
         {
-            if ((workingDaysBitmask & (1 << d)) == 0) continue;
+            if ((settings.WorkingDays & (1 << (int)date.DayOfWeek)) == 0) continue;
+            if (loggedDates.Contains(date)) continue;
 
-            var targetDow  = (DayOfWeek)d;
-            int daysUntil  = ((int)targetDow - (int)today.DayOfWeek + 7) % 7;
-
-            // If target is today but the time has already passed, push to next week
-            if (daysUntil == 0 && today.AddHours(hour).AddMinutes(minute) <= DateTime.Now)
-                daysUntil = 7;
-
-            var notifyTime = today.AddDays(daysUntil).AddHours(hour).AddMinutes(minute);
+            var notifyTime = date.ToDateTime(TimeOnly.MinValue)
+                .AddHours(settings.NotificationHour)
+                .AddMinutes(settings.NotificationMinute);
+            if (notifyTime <= DateTime.Now) continue;
 
             var request = new NotificationRequest
             {
-                NotificationId = ReminderBaseId + d,
+                NotificationId = IdForDate(date),
                 Title          = "TradeLedger",
                 Description    = "Don't forget to log your hours today!",
                 BadgeNumber    = 1,
-                Schedule       = new NotificationRequestSchedule
-                {
-                    NotifyTime = notifyTime,
-                    RepeatType = NotificationRepeat.Weekly
-                }
+                Schedule       = new NotificationRequestSchedule { NotifyTime = notifyTime }
             };
 
             await LocalNotificationCenter.Current.Show(request);
         }
     }
 
-    public void CancelDailyReminder()
+    public void CancelAllReminders()
     {
-        for (int d = 0; d < 7; d++)
-            LocalNotificationCenter.Current.Cancel(ReminderBaseId + d);
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        for (int offset = -3; offset < WindowDays + 3; offset++)
+            LocalNotificationCenter.Current.Cancel(IdForDate(today.AddDays(offset)));
     }
 }

@@ -291,7 +291,7 @@
         await TrackerService.SaveSettingsAsync(settings);
 
         if (!notificationsEnabled)
-            NotifService.CancelDailyReminder();
+            NotifService.CancelAllReminders();
     }
 
     private async Task SaveNotification()
@@ -302,7 +302,7 @@
         settings.NotificationsEnabled = true;
         settings.WorkingDays          = workingDays;
         await TrackerService.SaveSettingsAsync(settings);
-        await NotifService.ScheduleWorkingDayRemindersAsync(notificationHour, notificationMinute, workingDays);
+        await NotifService.RescheduleAsync();
     }
 
     private async Task TogglePremium()

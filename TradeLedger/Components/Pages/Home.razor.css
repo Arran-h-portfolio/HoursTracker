@@ -45,6 +45,110 @@
     margin-bottom: 1.5rem;
 }
 
+/* ── Bell badge (missed working days) ── */
+.home-header {
+    position: relative;
+}
+
+.home-header .main-headings {
+    margin-bottom: 1.5rem;
+}
+
+.bell-button {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    transform: translateY(-50%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    background: none;
+    border: none;
+    color: var(--color-muted);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.bell-button.has-alert {
+    color: var(--color-danger);
+}
+
+.bell-icon {
+    width: 22px;
+    height: 22px;
+}
+
+.bell-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    min-width: 15px;
+    height: 15px;
+    padding: 0 3px;
+    border-radius: 999px;
+    background-color: var(--color-danger);
+    color: #FFFFFF;
+    font-size: 0.62rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.missed-popover {
+    animation: card-enter 0.2s ease both;
+}
+
+.missed-days-empty {
+    font-size: 0.85rem;
+    color: var(--color-muted);
+    margin: 8px 0 0;
+}
+
+.missed-days-list {
+    list-style: none;
+    padding: 0;
+    margin: 8px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.missed-days-list li {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 8px 12px;
+    background-color: var(--color-bg);
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: var(--color-text);
+}
+
+.missed-day-log-btn {
+    background: none;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 5px 12px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-brand);
+    cursor: pointer;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.missed-day-log-btn:hover {
+    background-color: var(--color-brand);
+    border-color: var(--color-brand);
+    color: #FFFFFF;
+}
+
 .secondary-headings {
     color: var(--color-muted);
     font-size: 0.8rem;
